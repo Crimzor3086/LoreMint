@@ -1,4 +1,4 @@
-# LoreMint - AI-Powered IP Tokenization & Storyworld Engine
+git # LoreMint - AI-Powered IP Tokenization & Storyworld Engine
 
 ## Project Overview
 
@@ -32,7 +32,7 @@ LoreMint/
 
 ```sh
 # Step 1: Clone the repository
-git clone <YOUR_GIT_URL>
+git clone https://github.com/Crimzor3086/LoreMint.git
 
 # Step 2: Navigate to the project directory
 cd LoreMint
@@ -45,6 +45,10 @@ npm run dev
 ```
 
 The application will be available at `http://localhost:8080`
+
+## Repository
+
+**GitHub**: [https://github.com/Crimzor3086/LoreMint](https://github.com/Crimzor3086/LoreMint)
 
 **Edit a file directly in GitHub**
 
