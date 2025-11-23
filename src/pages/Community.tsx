@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
@@ -12,40 +12,21 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Contribution } from "@/types";
 import { useWalletContext } from "@/context/WalletContext";
+import { useContributions } from "@/hooks/useContributions";
 import { ThumbsUp, MessageSquare, CheckCircle, Clock, Sparkles, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const Community = () => {
   const { wallet } = useWalletContext();
-  const [contributions, setContributions] = useState<Contribution[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { contributions, isLoading, submit, vote, approve, reject, fetchContributions } = useContributions();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [contributionType, setContributionType] = useState<string>("");
   const [contributionTitle, setContributionTitle] = useState("");
   const [contributionDescription, setContributionDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [votedContributions, setVotedContributions] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    // TODO: Fetch contributions from blockchain/API
-    const fetchContributions = async () => {
-      setIsLoading(true);
-      try {
-        // TODO: Replace with actual blockchain/API calls
-        // const allContributions = await fetchContributions();
-        // setContributions(allContributions);
-      } catch (error) {
-        console.error("Error fetching contributions:", error);
-        toast.error("Failed to load contributions");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchContributions();
-  }, []);
+  const [assetId, setAssetId] = useState(""); // TODO: Get from context or selection
 
   const handleVote = async (id: string) => {
     if (!wallet.isConnected) {
@@ -59,14 +40,8 @@ const Community = () => {
     }
 
     try {
-      // TODO: Replace with actual blockchain/API call
-      // await voteContribution(id, wallet.address);
+      await vote(id);
       setVotedContributions((prev) => new Set([...prev, id]));
-      setContributions((prev) =>
-        prev.map((c) =>
-          c.id === id ? { ...c, votes: c.votes + 1 } : c
-        )
-      );
       toast.success("Vote submitted!");
     } catch (error) {
       console.error("Error voting:", error);
@@ -80,27 +55,25 @@ const Community = () => {
       return;
     }
 
-    if (!contributionType || !contributionTitle || !contributionDescription) {
+    if (!contributionType || !contributionTitle || !contributionDescription || !assetId) {
       toast.error("Please fill in all fields");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // TODO: Replace with actual blockchain/API call
-      // const newContribution = await submitContribution({
-      //   type: contributionType as Contribution["type"],
-      //   title: contributionTitle,
-      //   description: contributionDescription,
-      //   contributorAddress: wallet.address!,
-      // });
-      
-      // setContributions((prev) => [newContribution, ...prev]);
+      await submit(
+        contributionType as "character" | "story" | "artwork" | "expansion",
+        contributionTitle,
+        contributionDescription,
+        assetId
+      );
       
       setIsDialogOpen(false);
       setContributionType("");
       setContributionTitle("");
       setContributionDescription("");
+      setAssetId("");
       toast.success("Contribution submitted! It will be reviewed by the community.");
     } catch (error) {
       console.error("Error submitting contribution:", error);
@@ -117,13 +90,8 @@ const Community = () => {
     }
 
     try {
-      // TODO: Replace with actual blockchain/API call
-      // await approveContribution(id, wallet.address);
-      setContributions((prev) =>
-        prev.map((c) =>
-          c.id === id ? { ...c, status: "approved" as const } : c
-        )
-      );
+      // Default royalty percentage - could be made configurable
+      await approve(id, 10);
       toast.success("Contribution approved!");
     } catch (error) {
       console.error("Error approving contribution:", error);
@@ -138,13 +106,7 @@ const Community = () => {
     }
 
     try {
-      // TODO: Replace with actual blockchain/API call
-      // await rejectContribution(id, wallet.address);
-      setContributions((prev) =>
-        prev.map((c) =>
-          c.id === id ? { ...c, status: "rejected" as const } : c
-        )
-      );
+      await reject(id);
       toast.success("Contribution rejected");
     } catch (error) {
       console.error("Error rejecting contribution:", error);
@@ -596,11 +558,28 @@ const Community = () => {
                   />
                 </div>
 
+                <div>
+                  <Label htmlFor="assetId" className="mb-2 block">
+                    Asset ID <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="assetId"
+                    type="text"
+                    value={assetId}
+                    onChange={(e) => setAssetId(e.target.value)}
+                    placeholder="Enter the token ID of the character/world/plot you're contributing to..."
+                    className="bg-secondary border-border"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    The token ID of the IP asset you want to contribute to
+                  </p>
+                </div>
+
                 <div className="flex gap-4 pt-4">
                   <GradientButton
                     variant="magic"
                     onClick={handleSubmitContribution}
-                    disabled={isSubmitting || !contributionType || !contributionTitle || !contributionDescription}
+                    disabled={isSubmitting || !contributionType || !contributionTitle || !contributionDescription || !assetId}
                     className="flex-1"
                   >
                     {isSubmitting ? "Submitting..." : "Submit Contribution"}

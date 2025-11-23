@@ -48,6 +48,11 @@ export function getContractInstance(
   signerOrProvider?: ethers.Signer | ethers.Provider
 ): ethers.Contract {
   const contract = CONTRACTS[contractName];
+  
+  if (contract.address === "0x0000000000000000000000000000000000000000") {
+    throw new Error(`Contract ${contractName} is not deployed. Please set the contract address in .env`);
+  }
+  
   const provider = signerOrProvider || getMantleProvider();
   return new ethers.Contract(contract.address, abi, provider);
 }

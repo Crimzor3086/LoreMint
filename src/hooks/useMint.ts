@@ -1,6 +1,10 @@
 import { useState } from "react";
-import { writeContract, waitForTransaction, CONTRACTS } from "@/lib/blockchain/contracts";
 import { useWalletContext } from "@/context/WalletContext";
+import { mintCharacter } from "@/lib/blockchain/services/characterService";
+import { mintWorld } from "@/lib/blockchain/services/worldService";
+import { mintPlot } from "@/lib/blockchain/services/plotService";
+import { CONTRACTS } from "@/lib/blockchain/contracts";
+import { ethers } from "ethers";
 
 export type MintType = "character" | "world" | "plot";
 
@@ -9,11 +13,6 @@ export interface MintResult {
   transactionHash: string;
   contractAddress: string;
 }
-
-// Placeholder ABI - replace with actual contract ABIs
-const ERC721_MINT_ABI = [
-  "function mint(address to, string memory name, string memory description) public returns (uint256)",
-];
 
 export function useMint() {
   const { wallet } = useWalletContext();
@@ -28,7 +27,7 @@ export function useMint() {
       attributes?: Record<string, any>;
     }
   ): Promise<MintResult | null> => {
-    if (!wallet.isConnected || !wallet.address) {
+    if (!wallet.isConnected || !wallet.address || !window.ethereum) {
       setError("Wallet not connected");
       return null;
     }
@@ -37,42 +36,60 @@ export function useMint() {
     setError(null);
 
     try {
-      // Determine contract based on type
-      const contractName = 
-        type === "character" ? "CHARACTER_TOKEN" :
-        type === "world" ? "WORLD_TOKEN" :
-        "PLOT_TOKEN";
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
 
-      const contract = CONTRACTS[contractName];
+      let result: { tokenId: string; txHash: string };
+      let contractAddress: string;
 
-      // Check if contract is deployed
-      if (contract.address === "0x0000000000000000000000000000000000000000") {
-        throw new Error("Contract not deployed yet");
+      switch (type) {
+        case "character": {
+          contractAddress = CONTRACTS.CHARACTER_TOKEN.address;
+          result = await mintCharacter(
+            signer,
+            metadata.name,
+            metadata.description,
+            metadata.attributes?.abilities || [],
+            metadata.attributes?.traits || []
+          );
+          break;
+        }
+        case "world": {
+          contractAddress = CONTRACTS.WORLD_TOKEN.address;
+          result = await mintWorld(
+            signer,
+            metadata.name,
+            metadata.attributes?.geography || "",
+            metadata.attributes?.culture || "",
+            metadata.attributes?.era || "",
+            metadata.description
+          );
+          break;
+        }
+        case "plot": {
+          contractAddress = CONTRACTS.PLOT_TOKEN.address;
+          result = await mintPlot(
+            signer,
+            metadata.name,
+            metadata.description,
+            metadata.attributes?.characterIds || [],
+            metadata.attributes?.worldId || "0"
+          );
+          break;
+        }
+        default:
+          throw new Error(`Unknown mint type: ${type}`);
       }
 
-      // Mint NFT - Note: This requires the actual contract ABI
-      // For now, using placeholder ABI. Replace with actual ABI from contracts
-      const txHash = await writeContract(
-        contractName,
-        ERC721_MINT_ABI,
-        "mint",
-        [wallet.address, metadata.name, metadata.description]
-      );
-
-      // Wait for confirmation
-      const receipt = await waitForTransaction(txHash);
-
-      // Extract token ID from transaction receipt logs
-      // In real implementation, parse the Transfer event to get tokenId
-      const tokenId = receipt.logs?.[0]?.topics?.[3] || "0";
-
       return {
-        tokenId,
-        transactionHash: txHash,
-        contractAddress: contract.address,
+        tokenId: result.tokenId,
+        transactionHash: result.txHash,
+        contractAddress,
       };
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Minting failed");
+      const errorMessage = err instanceof Error ? err.message : "Minting failed";
+      setError(errorMessage);
+      console.error("Minting error:", err);
       return null;
     } finally {
       setIsMinting(false);

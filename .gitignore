@@ -26,6 +26,17 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# Hardhat files
+cache/
+artifacts/
+deployments/
+coverage/
+coverage.json
+typechain-types/
+
+# Hardhat cache
+.hardhat/
+
 # Vite
 .vite/
 

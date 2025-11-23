@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { ParticleBackground } from "@/components/ParticleBackground";
@@ -8,46 +8,20 @@ import { Sparkles, Globe, BookOpen, Coins, TrendingUp, Users, DollarSign, Trendi
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Character, World, PlotArc, RoyaltySplit } from "@/types";
+import { RoyaltySplit } from "@/types";
 import { useWalletContext } from "@/context/WalletContext";
+import { useCharacters } from "@/hooks/useCharacters";
+import { useWorlds } from "@/hooks/useWorlds";
+import { usePlots } from "@/hooks/usePlots";
 
 const Dashboard = () => {
   const { wallet } = useWalletContext();
-  const [characters, setCharacters] = useState<Character[]>([]);
-  const [worlds, setWorlds] = useState<World[]>([]);
-  const [plotArcs, setPlotArcs] = useState<PlotArc[]>([]);
+  const { characters, isLoading: isLoadingCharacters } = useCharacters();
+  const { worlds, isLoading: isLoadingWorlds } = useWorlds();
+  const { plots: plotArcs, isLoading: isLoadingPlots } = usePlots();
   const [royaltySplits, setRoyaltySplits] = useState<RoyaltySplit[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // TODO: Fetch user's characters, worlds, plots, and royalties from blockchain/API
-    // For now, initialize with empty arrays
-    const fetchUserData = async () => {
-      if (!wallet.isConnected || !wallet.address) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        // TODO: Replace with actual blockchain/API calls
-        // const userCharacters = await fetchCharacters(wallet.address);
-        // const userWorlds = await fetchWorlds(wallet.address);
-        // const userPlots = await fetchPlotArcs(wallet.address);
-        // const userRoyalties = await fetchRoyaltySplits(wallet.address);
-        
-        // setCharacters(userCharacters);
-        // setWorlds(userWorlds);
-        // setPlotArcs(userPlots);
-        // setRoyaltySplits(userRoyalties);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, [wallet.isConnected, wallet.address]);
+  const isLoading = isLoadingCharacters || isLoadingWorlds || isLoadingPlots;
   return (
     <div className="min-h-screen bg-background relative">
       <ParticleBackground />

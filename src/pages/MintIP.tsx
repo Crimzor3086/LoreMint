@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
@@ -8,9 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Character, World, PlotArc } from "@/types";
 import { useWalletContext } from "@/context/WalletContext";
 import { useMint } from "@/hooks/useMint";
+import { useCharacters } from "@/hooks/useCharacters";
+import { useWorlds } from "@/hooks/useWorlds";
+import { usePlots } from "@/hooks/usePlots";
 import { Coins, User, Globe, BookOpen, CheckCircle, Sparkles, Wallet, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -18,47 +20,20 @@ import { Link } from "react-router-dom";
 const MintIP = () => {
   const { wallet } = useWalletContext();
   const { mint, isMinting, error } = useMint();
-  const [characters, setCharacters] = useState<Character[]>([]);
-  const [worlds, setWorlds] = useState<World[]>([]);
-  const [plotArcs, setPlotArcs] = useState<PlotArc[]>([]);
+  const { characters: allCharacters, fetchCharacters } = useCharacters();
+  const { worlds: allWorlds, fetchWorlds } = useWorlds();
+  const { plots: allPlots, fetchPlots } = usePlots();
   const [royaltyPercentage, setRoyaltyPercentage] = useState("10");
-  const [isLoading, setIsLoading] = useState(true);
   const [mintedAssets, setMintedAssets] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    // TODO: Fetch user's unminted characters, worlds, and plots from blockchain/API
-    const fetchUnmintedAssets = async () => {
-      if (!wallet.isConnected || !wallet.address) {
-        setIsLoading(false);
-        return;
-      }
+  // Filter out already minted assets (those with mintedAsIP = true or status = "minted")
+  const characters = allCharacters.filter(c => !c.mintedAsIP && !mintedAssets.has(c.id));
+  const worlds = allWorlds.filter(w => !w.mintedAsIP && !mintedAssets.has(w.id));
+  const plotArcs = allPlots.filter(p => p.status !== "minted" && !mintedAssets.has(p.id));
+  
+  const isLoading = false; // Hooks handle loading state
 
-      try {
-        // TODO: Replace with actual blockchain/API calls
-        // const userCharacters = await fetchCharacters(wallet.address);
-        // const userWorlds = await fetchWorlds(wallet.address);
-        // const userPlots = await fetchPlotArcs(wallet.address);
-        
-        // Filter out already minted assets
-        // const unmintedChars = userCharacters.filter(c => !c.mintedAsIP);
-        // const unmintedWorlds = userWorlds.filter(w => !w.mintedAsIP);
-        // const unmintedPlots = userPlots.filter(p => p.status !== "minted");
-        
-        // setCharacters(unmintedChars);
-        // setWorlds(unmintedWorlds);
-        // setPlotArcs(unmintedPlots);
-      } catch (error) {
-        console.error("Error fetching unminted assets:", error);
-        toast.error("Failed to load assets");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUnmintedAssets();
-  }, [wallet.isConnected, wallet.address]);
-
-  const handleMint = async (type: "character" | "world" | "plot", id: string, metadata: { name: string; description: string }) => {
+  const handleMint = async (type: "character" | "world" | "plot", id: string, metadata: { name: string; description: string; attributes?: any }) => {
     if (!wallet.isConnected) {
       toast.error("Please connect your wallet first");
       return;
@@ -69,6 +44,7 @@ const MintIP = () => {
         name: metadata.name,
         description: metadata.description,
         attributes: {
+          ...metadata.attributes,
           royaltyPercentage: parseFloat(royaltyPercentage),
         },
       });
@@ -76,7 +52,13 @@ const MintIP = () => {
       if (result) {
         toast.success(`${type} minted successfully as IP token!`);
         setMintedAssets((prev) => new Set([...prev, id]));
-        // TODO: Refresh the asset list from blockchain
+        
+        // Refresh asset lists from blockchain
+        await Promise.all([
+          fetchCharacters(),
+          fetchWorlds(),
+          fetchPlots(),
+        ]);
       }
     } catch (err) {
       console.error("Minting error:", err);

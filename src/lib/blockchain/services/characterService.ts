@@ -1,0 +1,144 @@
+/**
+ * Character Token Service
+ * Handles all character-related blockchain interactions
+ */
+
+import { ethers } from "ethers";
+import { getContractInstance, CONTRACTS } from "../contracts";
+import { getMantleProvider } from "../mantle";
+import CharacterTokenABI from "../abis/CharacterToken.json";
+import { Character } from "@/types";
+
+export interface CharacterMetadata {
+  name: string;
+  backstory: string;
+  abilities: string[];
+  traits: string[];
+  creator: string;
+  createdAt: bigint;
+}
+
+/**
+ * Get all characters owned by an address
+ */
+export async function getUserCharacters(address: string): Promise<Character[]> {
+  try {
+    const contract = getContractInstance("CHARACTER_TOKEN", CharacterTokenABI);
+    const balance = await contract.balanceOf(address);
+    const characters: Character[] = [];
+
+    for (let i = 0; i < Number(balance); i++) {
+      const tokenId = await contract.tokenOfOwnerByIndex(address, i);
+      const metadata = await contract.characters(tokenId);
+      
+      characters.push({
+        id: tokenId.toString(),
+        name: metadata.name,
+        backstory: metadata.backstory,
+        abilities: metadata.abilities,
+        traits: metadata.traits,
+        creator: metadata.creator,
+        createdAt: new Date(Number(metadata.createdAt) * 1000),
+        mintedAsIP: true,
+      });
+    }
+
+    return characters;
+  } catch (error: any) {
+    // If contract not deployed, return empty array
+    if (error?.message?.includes("not deployed")) {
+      console.warn("CharacterToken contract not deployed yet");
+      return [];
+    }
+    console.error("Error fetching user characters:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get a single character by token ID
+ */
+export async function getCharacter(tokenId: string): Promise<Character | null> {
+  const contract = getContractInstance("CHARACTER_TOKEN", CharacterTokenABI);
+  
+  try {
+    const metadata = await contract.characters(tokenId);
+    const owner = await contract.ownerOf(tokenId);
+    
+    return {
+      id: tokenId,
+      name: metadata.name,
+      backstory: metadata.backstory,
+      abilities: metadata.abilities,
+      traits: metadata.traits,
+      creator: metadata.creator,
+      createdAt: new Date(Number(metadata.createdAt) * 1000),
+      mintedAsIP: true,
+    };
+  } catch (error) {
+    console.error("Error fetching character:", error);
+    return null;
+  }
+}
+
+/**
+ * Mint a new character token
+ */
+export async function mintCharacter(
+  signer: ethers.Signer,
+  name: string,
+  backstory: string,
+  abilities: string[],
+  traits: string[]
+): Promise<{ tokenId: string; txHash: string }> {
+  const contract = getContractInstance("CHARACTER_TOKEN", CharacterTokenABI, signer);
+  const address = await signer.getAddress();
+
+  try {
+    const tx = await contract.mint(address, name, backstory, abilities, traits);
+    const receipt = await tx.wait();
+
+    // Extract token ID from event
+    const event = receipt.logs.find(
+      (log: any) => log.topics[0] === ethers.id("CharacterMinted(uint256,address,string)")
+    );
+    
+    const tokenId = event ? ethers.toNumber(event.topics[1]) : "0";
+
+    return {
+      tokenId: tokenId.toString(),
+      txHash: receipt.hash,
+    };
+  } catch (error) {
+    console.error("Error minting character:", error);
+    throw error;
+  }
+}
+
+/**
+ * Listen for new character mints
+ */
+export function subscribeToCharacterMints(
+  callback: (character: Character) => void
+): () => void {
+  const contract = getContractInstance("CHARACTER_TOKEN", CharacterTokenABI);
+  const provider = getMantleProvider();
+
+  const filter = contract.filters.CharacterMinted();
+  
+  provider.on(filter, async (log) => {
+    const parsedLog = contract.interface.parseLog(log);
+    if (parsedLog) {
+      const tokenId = parsedLog.args.tokenId.toString();
+      const character = await getCharacter(tokenId);
+      if (character) {
+        callback(character);
+      }
+    }
+  });
+
+  return () => {
+    provider.removeAllListeners(filter);
+  };
+}
+
