@@ -10,7 +10,10 @@ export interface PolygonConfig {
 }
 
 export const POLYGON_CONFIG: PolygonConfig = {
-  rpcUrl: import.meta.env.VITE_POLYGON_RPC_URL || "https://polygon-rpc.com",
+  rpcUrl: import.meta.env.VITE_POLYGON_RPC_URL || 
+    (import.meta.env.VITE_ALCHEMY_API_KEY 
+      ? `https://polygon-mainnet.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_API_KEY}`
+      : "https://polygon-rpc.com"),
   chainId: 137, // Polygon Mainnet
   networkName: "Polygon",
 };

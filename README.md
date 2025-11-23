@@ -1,4 +1,4 @@
-git # LoreMint - AI-Powered IP Tokenization & Storyworld Engine
+# LoreMint - AI-Powered IP Tokenization & Storyworld Engine
 
 ## Project Overview
 
@@ -40,11 +40,33 @@ cd LoreMint
 # Step 3: Install dependencies
 npm install
 
-# Step 4: Start the development server
+# Step 4: Set up environment variables
+cp .env.example .env
+# Edit .env and add your Alchemy API key and contract addresses
+
+# Step 5: Start the development server
 npm run dev
 ```
 
 The application will be available at `http://localhost:8080`
+
+### Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```env
+# Alchemy API Configuration
+VITE_ALCHEMY_API_KEY=your_alchemy_api_key_here
+VITE_POLYGON_RPC_URL=https://polygon-mainnet.g.alchemy.com/v2/YOUR_API_KEY
+
+# Contract Addresses (update after deployment)
+VITE_CHARACTER_TOKEN_ADDRESS=0x0000000000000000000000000000000000000000
+VITE_WORLD_TOKEN_ADDRESS=0x0000000000000000000000000000000000000000
+VITE_PLOT_TOKEN_ADDRESS=0x0000000000000000000000000000000000000000
+VITE_CONTRIBUTION_MANAGER_ADDRESS=0x0000000000000000000000000000000000000000
+```
+
+**Note**: The `.env` file is gitignored for security. Use `.env.example` as a template.
 
 ## Repository
 
