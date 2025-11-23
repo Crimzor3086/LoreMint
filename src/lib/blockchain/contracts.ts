@@ -1,7 +1,10 @@
 /**
  * Contract ABI imports & helpers
- * Handles Story L1 and Polygon smart contract interactions
+ * Handles Mantle smart contract interactions
  */
+
+import { ethers } from "ethers";
+import { getMantleProvider, MANTLE_CONFIG } from "./mantle";
 
 export interface ContractConfig {
   address: string;
@@ -13,19 +16,19 @@ export interface ContractConfig {
 export const CONTRACTS = {
   CHARACTER_TOKEN: {
     address: import.meta.env.VITE_CHARACTER_TOKEN_ADDRESS || "0x0000000000000000000000000000000000000000",
-    chainId: 137, // Polygon
+    chainId: MANTLE_CONFIG.chainId,
   },
   WORLD_TOKEN: {
     address: import.meta.env.VITE_WORLD_TOKEN_ADDRESS || "0x0000000000000000000000000000000000000000",
-    chainId: 137,
+    chainId: MANTLE_CONFIG.chainId,
   },
   PLOT_TOKEN: {
     address: import.meta.env.VITE_PLOT_TOKEN_ADDRESS || "0x0000000000000000000000000000000000000000",
-    chainId: 137,
+    chainId: MANTLE_CONFIG.chainId,
   },
   CONTRIBUTION_MANAGER: {
     address: import.meta.env.VITE_CONTRIBUTION_MANAGER_ADDRESS || "0x0000000000000000000000000000000000000000",
-    chainId: 137,
+    chainId: MANTLE_CONFIG.chainId,
   },
 } as const;
 
@@ -37,20 +40,29 @@ export function getContract(contractName: keyof typeof CONTRACTS): ContractConfi
 }
 
 /**
+ * Get contract instance with ethers.js
+ */
+export function getContractInstance(
+  contractName: keyof typeof CONTRACTS,
+  abi: any[],
+  signerOrProvider?: ethers.Signer | ethers.Provider
+): ethers.Contract {
+  const contract = CONTRACTS[contractName];
+  const provider = signerOrProvider || getMantleProvider();
+  return new ethers.Contract(contract.address, abi, provider);
+}
+
+/**
  * Read from contract
  */
 export async function readContract(
   contractName: keyof typeof CONTRACTS,
+  abi: any[],
   functionName: string,
   args: any[] = []
 ): Promise<any> {
-  // Mock implementation - replace with ethers.js or viem
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log(`Reading ${functionName} from ${contractName}`, args);
-      resolve(null);
-    }, 300);
-  });
+  const contract = getContractInstance(contractName, abi);
+  return await contract[functionName](...args);
 }
 
 /**
@@ -58,29 +70,30 @@ export async function readContract(
  */
 export async function writeContract(
   contractName: keyof typeof CONTRACTS,
+  abi: any[],
   functionName: string,
   args: any[] = [],
   value?: string
 ): Promise<string> {
-  // Mock implementation - replace with actual contract interaction
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
-      console.log(`Transaction ${txHash} for ${functionName} on ${contractName}`);
-      resolve(txHash);
-    }, 1000);
+  if (!window.ethereum) {
+    throw new Error("MetaMask is not installed");
+  }
+
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
+  const contract = getContractInstance(contractName, abi, signer);
+
+  const tx = await contract[functionName](...args, {
+    value: value ? ethers.parseEther(value) : undefined,
   });
+
+  return tx.hash;
 }
 
 /**
  * Wait for transaction confirmation
  */
-export async function waitForTransaction(txHash: string): Promise<boolean> {
-  // Mock implementation
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log(`Transaction ${txHash} confirmed`);
-      resolve(true);
-    }, 2000);
-  });
+export async function waitForTransaction(txHash: string): Promise<ethers.TransactionReceipt> {
+  const provider = getMantleProvider();
+  return await provider.waitForTransaction(txHash);
 }

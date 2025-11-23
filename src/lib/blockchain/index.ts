@@ -1,4 +1,3 @@
 // Re-export blockchain utilities
-export * from "./polygon";
+export * from "./mantle";
 export * from "./contracts";
-
