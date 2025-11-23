@@ -4,7 +4,7 @@ import { GradientButton } from "@/components/ui/gradient-button";
 import { ParticleBackground } from "@/components/ParticleBackground";
 import { Navbar } from "@/components/Navbar";
 import { motion } from "framer-motion";
-import { Sparkles, Globe, BookOpen, Coins, TrendingUp, Users, DollarSign } from "lucide-react";
+import { Sparkles, Globe, BookOpen, Coins, TrendingUp, Users, DollarSign, TrendingDown, Wallet, Calendar, Percent, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -293,146 +293,325 @@ const Dashboard = () => {
           transition={{ delay: 1.0 }}
           className="mt-12"
         >
-          <h2 className="text-2xl font-bold gradient-text-gold mb-6">Royalty Distribution</h2>
-          <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 max-w-xl mb-6 bg-secondary">
-              <TabsTrigger value="all">All Assets</TabsTrigger>
-              <TabsTrigger value="characters">Characters</TabsTrigger>
-              <TabsTrigger value="worlds">Worlds</TabsTrigger>
-            </TabsList>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold gradient-text-gold mb-2">Royalty Distribution</h2>
+              <p className="text-sm text-muted-foreground">
+                Track earnings and contributor shares from your minted IP assets
+              </p>
+            </div>
+            {royaltySplits.length > 0 && (
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground mb-1">Total Revenue</p>
+                <p className="text-2xl font-bold text-gold">
+                  ${royaltySplits.reduce((sum, r) => sum + r.totalRevenue, 0).toFixed(2)}
+                </p>
+              </div>
+            )}
+          </div>
 
-            <TabsContent value="all" className="space-y-4">
-              {royaltySplits.length === 0 ? (
-                <GlowCard glowColor="gold" className="p-12 text-center">
-                  <DollarSign className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <p className="text-xl text-muted-foreground mb-2">
-                    No royalty distributions yet
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Royalties will appear here once you mint IP and receive contributions
-                  </p>
-                </GlowCard>
-              ) : (
-                royaltySplits.map((royalty, index) => (
-                <motion.div
-                  key={royalty.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.1 + index * 0.1 }}
-                  whileHover={{ y: -5 }}
-                >
-                  <GlowCard glowColor="gold" className="hover-tilt">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge className="capitalize bg-gold/20 text-gold">
-                            {royalty.assetType}
-                          </Badge>
-                          <h3 className="text-xl font-bold">{royalty.assetName}</h3>
+          {royaltySplits.length === 0 ? (
+            <GlowCard glowColor="gold" className="p-12 text-center">
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <DollarSign className="w-20 h-20 mx-auto mb-6 text-gold opacity-50" />
+              </motion.div>
+              <h3 className="text-2xl font-bold mb-3">No Royalty Distributions Yet</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Royalties will appear here once you mint your IP assets and receive community contributions. 
+                Each contribution automatically shares a percentage of revenue with contributors.
+              </p>
+              <div className="flex gap-4 justify-center">
+                <Link to="/mint">
+                  <GradientButton variant="gold">
+                    <Coins className="w-4 h-4 mr-2 inline" />
+                    Mint Your First IP
+                  </GradientButton>
+                </Link>
+                <Link to="/community">
+                  <GradientButton variant="cosmic">
+                    <Users className="w-4 h-4 mr-2 inline" />
+                    View Community
+                  </GradientButton>
+                </Link>
+              </div>
+            </GlowCard>
+          ) : (
+            <Tabs defaultValue="all" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 max-w-xl mb-8 bg-secondary">
+                <TabsTrigger value="all" className="flex items-center gap-2">
+                  <Coins className="w-4 h-4" />
+                  All Assets ({royaltySplits.length})
+                </TabsTrigger>
+                <TabsTrigger value="characters" className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Characters ({royaltySplits.filter(r => r.assetType === "character").length})
+                </TabsTrigger>
+                <TabsTrigger value="worlds" className="flex items-center gap-2">
+                  <Globe className="w-4 h-4" />
+                  Worlds ({royaltySplits.filter(r => r.assetType === "world").length})
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="all" className="space-y-6">
+                {royaltySplits.map((royalty, index) => {
+                  const creatorAmount = (royalty.totalRevenue * royalty.creatorPercentage) / 100;
+                  const totalContributorPercentage = royalty.contributors.reduce((sum, c) => sum + c.percentage, 0);
+                  
+                  return (
+                    <motion.div
+                      key={royalty.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 + index * 0.1 }}
+                      whileHover={{ y: -5 }}
+                    >
+                      <GlowCard glowColor="gold" className="hover-tilt overflow-hidden">
+                        {/* Header */}
+                        <div className="flex items-start justify-between mb-6 pb-4 border-b border-gold/20">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-3">
+                              <Badge className="capitalize bg-gold/20 text-gold border-gold/30 px-3 py-1">
+                                {royalty.assetType}
+                              </Badge>
+                              <h3 className="text-2xl font-bold">{royalty.assetName}</h3>
+                            </div>
+                            <div className="flex items-center gap-6 text-sm">
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <Wallet className="w-4 h-4" />
+                                <span className="font-mono text-xs">{royalty.creatorAddress.slice(0, 6)}...{royalty.creatorAddress.slice(-4)}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <Calendar className="w-4 h-4" />
+                                <span>Last: {royalty.lastDistribution.toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-muted-foreground mb-1">Total Revenue</p>
+                            <p className="text-3xl font-bold text-gold">
+                              ${royalty.totalRevenue.toFixed(2)}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          Total Revenue: <span className="text-gold font-semibold">${royalty.totalRevenue.toFixed(2)}</span>
-                        </p>
-                      </div>
-                      <DollarSign className="w-8 h-8 text-gold opacity-50" />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Creator ({royalty.creatorAddress})</span>
-                        <span className="font-semibold">{royalty.creatorPercentage}%</span>
-                      </div>
-                      {royalty.contributors.map((contributor, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-sm pl-4 border-l-2 border-primary/30">
-                          <span className="text-muted-foreground">{contributor.name}</span>
-                          <span className="font-semibold text-primary">{contributor.percentage}%</span>
+
+                        {/* Distribution Breakdown */}
+                        <div className="space-y-4">
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-gold"></div>
+                                <span className="font-semibold">Creator Share</span>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <span className="text-gold font-bold">{royalty.creatorPercentage}%</span>
+                                <span className="text-gold font-bold">${creatorAmount.toFixed(2)}</span>
+                              </div>
+                            </div>
+                            <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${royalty.creatorPercentage}%` }}
+                                transition={{ duration: 0.8, delay: index * 0.1 }}
+                                className="h-full bg-gradient-to-r from-gold to-yellow-400"
+                              />
+                            </div>
+                          </div>
+
+                          {royalty.contributors.length > 0 && (
+                            <div className="pt-4 border-t border-primary/10">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Users className="w-4 h-4 text-primary" />
+                                <span className="font-semibold text-sm">Contributors ({royalty.contributors.length})</span>
+                                <span className="text-xs text-muted-foreground ml-auto">
+                                  {totalContributorPercentage}% total
+                                </span>
+                              </div>
+                              <div className="space-y-3">
+                                {royalty.contributors.map((contributor, idx) => {
+                                  const contributorAmount = (royalty.totalRevenue * contributor.percentage) / 100;
+                                  return (
+                                    <div key={idx} className="pl-4 border-l-2 border-primary/30">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <div className="flex items-center gap-2">
+                                          <div className="w-2 h-2 rounded-full bg-primary"></div>
+                                          <span className="text-sm font-medium">{contributor.name}</span>
+                                          <span className="text-xs text-muted-foreground font-mono">
+                                            {contributor.address.slice(0, 6)}...{contributor.address.slice(-4)}
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                          <span className="text-primary font-semibold text-sm">{contributor.percentage}%</span>
+                                          <span className="text-primary font-semibold">${contributorAmount.toFixed(2)}</span>
+                                        </div>
+                                      </div>
+                                      <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
+                                        <motion.div
+                                          initial={{ width: 0 }}
+                                          animate={{ width: `${contributor.percentage}%` }}
+                                          transition={{ duration: 0.8, delay: index * 0.1 + idx * 0.05 }}
+                                          className="h-full bg-gradient-to-r from-primary to-purple-500"
+                                        />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-4">
-                      Last distribution: {royalty.lastDistribution.toLocaleDateString()}
+
+                        {/* Footer Actions */}
+                        <div className="mt-6 pt-4 border-t border-gold/10 flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Percent className="w-3 h-3" />
+                            <span>
+                              {royalty.creatorPercentage + totalContributorPercentage}% distributed
+                            </span>
+                          </div>
+                          <Link 
+                            to={`/graph`}
+                            className="text-xs text-gold hover:text-yellow-400 transition-colors flex items-center gap-1"
+                          >
+                            View in Graph
+                            <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        </div>
+                      </GlowCard>
+                    </motion.div>
+                  );
+                })}
+              </TabsContent>
+
+              <TabsContent value="characters" className="space-y-6">
+                {royaltySplits.filter(r => r.assetType === "character").length === 0 ? (
+                  <GlowCard glowColor="gold" className="p-12 text-center">
+                    <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <p className="text-xl text-muted-foreground mb-2">No character royalties yet</p>
+                    <p className="text-sm text-muted-foreground">
+                      Mint characters and receive contributions to see royalty distributions here
                     </p>
                   </GlowCard>
-                </motion.div>
-                ))
-              )}
-            </TabsContent>
+                ) : (
+                  royaltySplits
+                    .filter(r => r.assetType === "character")
+                    .map((royalty, index) => {
+                      const creatorAmount = (royalty.totalRevenue * royalty.creatorPercentage) / 100;
+                      return (
+                        <motion.div
+                          key={royalty.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          whileHover={{ y: -5 }}
+                        >
+                          <GlowCard glowColor="gold" className="hover-tilt">
+                            <div className="flex items-start justify-between mb-4">
+                              <div>
+                                <h3 className="text-xl font-bold mb-2">{royalty.assetName}</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Revenue: <span className="text-gold font-semibold">${royalty.totalRevenue.toFixed(2)}</span>
+                                </p>
+                              </div>
+                              <Users className="w-8 h-8 text-gold opacity-50" />
+                            </div>
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between p-3 bg-gold/10 rounded-lg">
+                                <span className="font-medium">Creator</span>
+                                <div className="flex items-center gap-4">
+                                  <span className="text-gold font-bold">{royalty.creatorPercentage}%</span>
+                                  <span className="text-gold font-bold">${creatorAmount.toFixed(2)}</span>
+                                </div>
+                              </div>
+                              {royalty.contributors.map((c, idx) => {
+                                const contributorAmount = (royalty.totalRevenue * c.percentage) / 100;
+                                return (
+                                  <div key={idx} className="flex items-center justify-between p-3 bg-primary/10 rounded-lg pl-6 border-l-2 border-primary/30">
+                                    <div>
+                                      <span className="font-medium text-sm">{c.name}</span>
+                                      <p className="text-xs text-muted-foreground font-mono">{c.address.slice(0, 8)}...{c.address.slice(-6)}</p>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                      <span className="text-primary font-semibold">{c.percentage}%</span>
+                                      <span className="text-primary font-semibold">${contributorAmount.toFixed(2)}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </GlowCard>
+                        </motion.div>
+                      );
+                    })
+                )}
+              </TabsContent>
 
-            <TabsContent value="characters">
-              {royaltySplits.filter(r => r.assetType === "character").length === 0 ? (
-                <GlowCard glowColor="gold" className="p-12 text-center">
-                  <p className="text-muted-foreground">No character royalties yet</p>
-                </GlowCard>
-              ) : (
-                royaltySplits
-                  .filter(r => r.assetType === "character")
-                  .map((royalty, index) => (
-                  <motion.div
-                    key={royalty.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <GlowCard glowColor="gold">
-                      <h3 className="text-xl font-bold mb-2">{royalty.assetName}</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Revenue: <span className="text-gold font-semibold">${royalty.totalRevenue.toFixed(2)}</span>
-                      </p>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Creator</span>
-                          <span>{royalty.creatorPercentage}%</span>
-                        </div>
-                        {royalty.contributors.map((c, idx) => (
-                          <div key={idx} className="flex justify-between text-sm pl-4">
-                            <span>{c.name}</span>
-                            <span>{c.percentage}%</span>
-                          </div>
-                        ))}
-                      </div>
-                    </GlowCard>
-                  </motion.div>
-                  ))
-              )}
-            </TabsContent>
-
-            <TabsContent value="worlds">
-              {royaltySplits.filter(r => r.assetType === "world").length === 0 ? (
-                <GlowCard glowColor="gold" className="p-12 text-center">
-                  <p className="text-muted-foreground">No world royalties yet</p>
-                </GlowCard>
-              ) : (
-                royaltySplits
-                  .filter(r => r.assetType === "world")
-                  .map((royalty, index) => (
-                  <motion.div
-                    key={royalty.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <GlowCard glowColor="gold">
-                      <h3 className="text-xl font-bold mb-2">{royalty.assetName}</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Revenue: <span className="text-gold font-semibold">${royalty.totalRevenue.toFixed(2)}</span>
-                      </p>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Creator</span>
-                          <span>{royalty.creatorPercentage}%</span>
-                        </div>
-                        {royalty.contributors.map((c, idx) => (
-                          <div key={idx} className="flex justify-between text-sm pl-4">
-                            <span>{c.name}</span>
-                            <span>{c.percentage}%</span>
-                          </div>
-                        ))}
-                      </div>
-                    </GlowCard>
-                  </motion.div>
-                  ))
-              )}
-            </TabsContent>
-          </Tabs>
+              <TabsContent value="worlds" className="space-y-6">
+                {royaltySplits.filter(r => r.assetType === "world").length === 0 ? (
+                  <GlowCard glowColor="gold" className="p-12 text-center">
+                    <Globe className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <p className="text-xl text-muted-foreground mb-2">No world royalties yet</p>
+                    <p className="text-sm text-muted-foreground">
+                      Mint worlds and receive contributions to see royalty distributions here
+                    </p>
+                  </GlowCard>
+                ) : (
+                  royaltySplits
+                    .filter(r => r.assetType === "world")
+                    .map((royalty, index) => {
+                      const creatorAmount = (royalty.totalRevenue * royalty.creatorPercentage) / 100;
+                      return (
+                        <motion.div
+                          key={royalty.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          whileHover={{ y: -5 }}
+                        >
+                          <GlowCard glowColor="gold" className="hover-tilt">
+                            <div className="flex items-start justify-between mb-4">
+                              <div>
+                                <h3 className="text-xl font-bold mb-2">{royalty.assetName}</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Revenue: <span className="text-gold font-semibold">${royalty.totalRevenue.toFixed(2)}</span>
+                                </p>
+                              </div>
+                              <Globe className="w-8 h-8 text-gold opacity-50" />
+                            </div>
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between p-3 bg-gold/10 rounded-lg">
+                                <span className="font-medium">Creator</span>
+                                <div className="flex items-center gap-4">
+                                  <span className="text-gold font-bold">{royalty.creatorPercentage}%</span>
+                                  <span className="text-gold font-bold">${creatorAmount.toFixed(2)}</span>
+                                </div>
+                              </div>
+                              {royalty.contributors.map((c, idx) => {
+                                const contributorAmount = (royalty.totalRevenue * c.percentage) / 100;
+                                return (
+                                  <div key={idx} className="flex items-center justify-between p-3 bg-primary/10 rounded-lg pl-6 border-l-2 border-primary/30">
+                                    <div>
+                                      <span className="font-medium text-sm">{c.name}</span>
+                                      <p className="text-xs text-muted-foreground font-mono">{c.address.slice(0, 8)}...{c.address.slice(-6)}</p>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                      <span className="text-primary font-semibold">{c.percentage}%</span>
+                                      <span className="text-primary font-semibold">${contributorAmount.toFixed(2)}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </GlowCard>
+                        </motion.div>
+                      );
+                    })
+                )}
+              </TabsContent>
+            </Tabs>
+          )}
         </motion.div>
       </div>
     </div>
