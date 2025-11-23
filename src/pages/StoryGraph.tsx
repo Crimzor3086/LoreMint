@@ -124,6 +124,17 @@ const StoryGraph = () => {
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
+    // Add wheel event listener with passive: false to allow preventDefault
+    const handleWheelNative = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      setZoom((prev) => Math.max(0.5, Math.min(2, prev * delta)));
+    };
+
+    canvas.addEventListener("wheel", handleWheelNative, { passive: false });
+
+    canvas.addEventListener("wheel", handleWheelNative, { passive: false });
+
     const nodes = nodesRef.current;
     const links = linksRef.current;
 
@@ -211,6 +222,31 @@ const StoryGraph = () => {
 
       // Draw nodes
       nodes.forEach((node) => {
+        // Convert HSL to RGBA for gradient
+        const hslToRgba = (hsl: string, alpha: number): string => {
+          // Extract HSL values from string like "hsl(280, 85%, 65%)"
+          const match = hsl.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+          if (!match) return `rgba(199, 146, 234, ${alpha})`; // fallback
+          
+          const h = parseInt(match[1]) / 360;
+          const s = parseInt(match[2]) / 100;
+          const l = parseInt(match[3]) / 100;
+          
+          const c = (1 - Math.abs(2 * l - 1)) * s;
+          const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+          const m = l - c / 2;
+          
+          let r = 0, g = 0, b = 0;
+          if (h < 1/6) { r = c; g = x; b = 0; }
+          else if (h < 2/6) { r = x; g = c; b = 0; }
+          else if (h < 3/6) { r = 0; g = c; b = x; }
+          else if (h < 4/6) { r = 0; g = x; b = c; }
+          else if (h < 5/6) { r = x; g = 0; b = c; }
+          else { r = c; g = 0; b = x; }
+          
+          return `rgba(${Math.round((r + m) * 255)}, ${Math.round((g + m) * 255)}, ${Math.round((b + m) * 255)}, ${alpha})`;
+        };
+
         // Glow effect
         const gradient = ctx.createRadialGradient(
           node.x,
@@ -220,8 +256,8 @@ const StoryGraph = () => {
           node.y,
           node.radius * 2
         );
-        gradient.addColorStop(0, node.color + "80");
-        gradient.addColorStop(1, node.color + "00");
+        gradient.addColorStop(0, hslToRgba(node.color, 0.5));
+        gradient.addColorStop(1, hslToRgba(node.color, 0));
 
         ctx.fillStyle = gradient;
         ctx.beginPath();
@@ -259,6 +295,7 @@ const StoryGraph = () => {
 
     return () => {
       window.removeEventListener("resize", resizeCanvas);
+      canvas.removeEventListener("wheel", handleWheelNative);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
@@ -282,10 +319,10 @@ const StoryGraph = () => {
     setSelectedNode(clickedNode || null);
   };
 
+  // Wheel handling is now done via native event listener in useEffect
+  // This function is kept for compatibility but won't be used
   const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    setZoom((prev) => Math.max(0.5, Math.min(2, prev * delta)));
+    // Handled by native event listener with passive: false
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -376,7 +413,6 @@ const StoryGraph = () => {
                 ref={canvasRef}
                 className="w-full h-full cursor-move"
                 onClick={handleCanvasClick}
-                onWheel={handleWheel}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
