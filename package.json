@@ -95,6 +95,7 @@
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
+    "fraction.js": "^5.3.4",
     "globals": "^15.15.0",
     "hardhat": "^2.27.0",
     "hardhat-gas-reporter": "^2.3.0",

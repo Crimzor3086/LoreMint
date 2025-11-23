@@ -38,6 +38,10 @@ typechain-types/
 # Hardhat cache
 .hardhat/
 
+# Build output
+dist/
+build/
+
 # Vite
 .vite/
 
