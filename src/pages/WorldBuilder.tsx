@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Globe, Sparkles, X, MapPin, Users, Clock } from "lucide-react";
+import { Globe, Sparkles, X, MapPin, Users, Clock, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { AIService } from "@/lib/ai";
 
@@ -35,28 +35,45 @@ const WorldBuilder = () => {
   };
 
   const generateLore = async () => {
-    if (!name) {
-      toast.error("Please enter a world name first");
-      return;
-    }
-    
     setIsGenerating(true);
     try {
-      const lore = await AIService.generateWorldLore({
-        name,
-        era,
-        geography,
-        culture,
-        history,
-        features,
+      const result = await AIService.generateWorld({
+        name: name || undefined,
+        era: era || undefined,
+        geography: geography || undefined,
+        culture: culture || undefined,
+        history: history || undefined,
+        features: features.length > 0 ? features : undefined,
       });
-      setGeneratedLore(lore);
-      toast.success("World lore generated successfully!");
+      
+      // Auto-fill all fields with AI-generated content
+      if (result.name && !name) setName(result.name);
+      if (result.era && !era) setEra(result.era);
+      if (result.geography && !geography) setGeography(result.geography);
+      if (result.culture && !culture) setCulture(result.culture);
+      if (result.history && !history) setHistory(result.history);
+      if (result.features && result.features.length > 0 && features.length === 0) {
+        setFeatures(result.features);
+      }
+      setGeneratedLore(result.lore);
+      toast.success("World generated and fields filled!");
     } catch (error) {
-      toast.error("Failed to generate lore. Please try again.");
+      toast.error("Failed to generate world. Please try again.");
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const clearAll = () => {
+    setName("");
+    setEra("");
+    setGeography("");
+    setCulture("");
+    setHistory("");
+    setFeatures([]);
+    setGeneratedLore("");
+    setCurrentFeature("");
+    toast.success("All fields cleared!");
   };
 
   const handleMint = () => {
@@ -290,11 +307,11 @@ const WorldBuilder = () => {
               <GradientButton
                 variant="emerald"
                 onClick={generateLore}
-                disabled={isGenerating || !name}
+                disabled={isGenerating}
                 className="w-full"
               >
                 <Sparkles className="w-4 h-4 mr-2 inline" />
-                {isGenerating ? "Generating..." : "Generate World Lore with AI"}
+                {isGenerating ? "Generating..." : "Generate World with AI"}
               </GradientButton>
               <GradientButton
                 variant="gold"
@@ -303,6 +320,15 @@ const WorldBuilder = () => {
                 className="w-full"
               >
                 Mint as IP
+              </GradientButton>
+              <GradientButton
+                variant="magic"
+                onClick={clearAll}
+                disabled={isGenerating}
+                className="w-full opacity-80 hover:opacity-100"
+              >
+                <RotateCcw className="w-4 h-4 mr-2 inline" />
+                Clear All
               </GradientButton>
             </div>
           </motion.div>

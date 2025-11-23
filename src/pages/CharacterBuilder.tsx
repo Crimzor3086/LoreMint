@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, User, X } from "lucide-react";
+import { Sparkles, User, X, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { AIService } from "@/lib/ai";
 
@@ -52,27 +52,58 @@ const CharacterBuilder = () => {
   };
 
   const generateLore = async () => {
-    if (!name) {
-      toast.error("Please enter a character name first");
-      return;
-    }
-    
     setIsGenerating(true);
     try {
-      const lore = await AIService.generateCharacterLore({
-        name,
-        backstory,
-        traits,
-        abilities,
-        personality,
+      const result = await AIService.generateCharacter({
+        name: name || undefined,
+        backstory: backstory || undefined,
+        traits: traits.length > 0 ? traits : undefined,
+        abilities: abilities.length > 0 ? abilities : undefined,
+        personality: {
+          courage: personality.courage[0],
+          wisdom: personality.wisdom[0],
+          charisma: personality.charisma[0],
+          cunning: personality.cunning[0],
+        },
       });
-      setGeneratedLore(lore);
-      toast.success("Lore generated successfully!");
+      
+      // Auto-fill all fields with AI-generated content
+      if (result.name && !name) setName(result.name);
+      if (result.backstory) setBackstory(result.backstory);
+      if (result.traits && result.traits.length > 0) setTraits(result.traits);
+      if (result.abilities && result.abilities.length > 0) setAbilities(result.abilities);
+      if (result.personality) {
+        setPersonality({
+          courage: [result.personality.courage],
+          wisdom: [result.personality.wisdom],
+          charisma: [result.personality.charisma],
+          cunning: [result.personality.cunning],
+        });
+      }
+      setGeneratedLore(result.lore);
+      toast.success("Character generated and fields filled!");
     } catch (error) {
-      toast.error("Failed to generate lore. Please try again.");
+      toast.error("Failed to generate character. Please try again.");
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const clearAll = () => {
+    setName("");
+    setBackstory("");
+    setTraits([]);
+    setAbilities([]);
+    setPersonality({
+      courage: [50],
+      wisdom: [50],
+      charisma: [50],
+      cunning: [50],
+    });
+    setGeneratedLore("");
+    setCurrentTrait("");
+    setCurrentAbility("");
+    toast.success("All fields cleared!");
   };
 
   const handleMint = () => {
@@ -287,11 +318,11 @@ const CharacterBuilder = () => {
               <GradientButton
                 variant="cosmic"
                 onClick={generateLore}
-                disabled={isGenerating || !name}
+                disabled={isGenerating}
                 className="w-full"
               >
                 <Sparkles className="w-4 h-4 mr-2 inline" />
-                {isGenerating ? "Generating..." : "Generate Lore with AI"}
+                {isGenerating ? "Generating..." : "Generate Character with AI"}
               </GradientButton>
               <GradientButton
                 variant="gold"
@@ -300,6 +331,15 @@ const CharacterBuilder = () => {
                 className="w-full"
               >
                 Mint as IP
+              </GradientButton>
+              <GradientButton
+                variant="magic"
+                onClick={clearAll}
+                disabled={isGenerating}
+                className="w-full opacity-80 hover:opacity-100"
+              >
+                <RotateCcw className="w-4 h-4 mr-2 inline" />
+                Clear All
               </GradientButton>
             </div>
           </motion.div>

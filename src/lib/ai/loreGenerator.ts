@@ -47,6 +47,30 @@ const TRAIT_COMBINATIONS = [
   ["eternal youth", "ancient knowledge"],
 ];
 
+export interface CharacterGenerationResult {
+  lore: string;
+  name?: string;
+  backstory?: string;
+  traits?: string[];
+  abilities?: string[];
+  personality?: {
+    courage: number;
+    wisdom: number;
+    charisma: number;
+    cunning: number;
+  };
+}
+
+export interface WorldGenerationResult {
+  lore: string;
+  name?: string;
+  era?: string;
+  geography?: string;
+  culture?: string;
+  history?: string;
+  features?: string[];
+}
+
 export class AIService {
   /**
    * Generate character lore using AI
@@ -77,6 +101,65 @@ export class AIService {
   }
 
   /**
+   * Generate complete character with all fields filled
+   */
+  static async generateCharacter(options: AIGenerationOptions): Promise<CharacterGenerationResult> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const template = LORE_TEMPLATES.character[
+          Math.floor(Math.random() * LORE_TEMPLATES.character.length)
+        ];
+        
+        // Generate or use provided values
+        const name = options.name || `Hero ${Math.floor(Math.random() * 1000)}`;
+        const era = options.era || ERA_OPTIONS[Math.floor(Math.random() * ERA_OPTIONS.length)];
+        const generatedTraits = options.traits && options.traits.length > 0 
+          ? options.traits 
+          : TRAIT_COMBINATIONS[Math.floor(Math.random() * TRAIT_COMBINATIONS.length)];
+        const generatedAbilities = options.abilities && options.abilities.length > 0
+          ? options.abilities
+          : ["Ancient Magic", "Combat Mastery", "Mystical Insight"];
+        
+        const trait = generatedTraits[0] || "mysterious power";
+        const trait2 = generatedTraits[1] || "legendary status";
+        const ability = generatedAbilities[0] || "ancient magic";
+
+        const lore = template
+          .replace(/{name}/g, name)
+          .replace(/{era}/g, era)
+          .replace(/{trait}/g, trait)
+          .replace(/{trait2}/g, trait2)
+          .replace(/{ability}/g, ability);
+
+        // Generate backstory
+        const backstory = `${name} was born in ${era}, a time of great upheaval. From an early age, they displayed ${trait}, which set them apart from others. Through years of training, they mastered ${ability}, becoming a figure of legend. Their ${trait2} has shaped countless adventures and continues to inspire those who hear their tale.`;
+
+        // Generate personality based on traits or random
+        const personality = options.personality || {
+          courage: Math.floor(Math.random() * 40) + 50,
+          wisdom: Math.floor(Math.random() * 40) + 50,
+          charisma: Math.floor(Math.random() * 40) + 50,
+          cunning: Math.floor(Math.random() * 40) + 50,
+        };
+
+        resolve({
+          lore,
+          name,
+          backstory,
+          traits: generatedTraits,
+          abilities: generatedAbilities,
+          personality: {
+            courage: Array.isArray(personality.courage) ? personality.courage[0] : personality.courage || 50,
+            wisdom: Array.isArray(personality.wisdom) ? personality.wisdom[0] : personality.wisdom || 50,
+            charisma: Array.isArray(personality.charisma) ? personality.charisma[0] : personality.charisma || 50,
+            cunning: Array.isArray(personality.cunning) ? personality.cunning[0] : personality.cunning || 50,
+          },
+        });
+      }, 2000 + Math.random() * 1000);
+    });
+  }
+
+  /**
    * Generate world lore using AI
    */
   static async generateWorldLore(options: AIGenerationOptions): Promise<string> {
@@ -102,6 +185,53 @@ export class AIService {
           .replace(/{feature}/g, feature);
 
         resolve(lore);
+      }, 2500 + Math.random() * 1000);
+    });
+  }
+
+  /**
+   * Generate complete world with all fields filled
+   */
+  static async generateWorld(options: AIGenerationOptions): Promise<WorldGenerationResult> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const template = LORE_TEMPLATES.world[
+          Math.floor(Math.random() * LORE_TEMPLATES.world.length)
+        ];
+        
+        // Generate or use provided values
+        const name = options.name || `Realm of ${["Myst", "Crystal", "Shadow", "Light", "Void"][Math.floor(Math.random() * 5)]}`;
+        const era = options.era || ERA_OPTIONS[Math.floor(Math.random() * ERA_OPTIONS.length)];
+        
+        const geography = options.geography || `A vast landscape of floating islands suspended above a sea of starlight. Mountain ranges pierce through clouds of cosmic dust, while crystal forests shimmer with ethereal light. Rivers of liquid magic flow through valleys, and ancient ruins dot the horizon, remnants of civilizations long forgotten.`;
+        
+        const culture = options.culture || `The inhabitants are a diverse people known for their deep connection to the mystical forces that shape their world. They practice ancient rituals under the light of twin moons, honor their ancestors through elaborate ceremonies, and value knowledge above all else. Their society is structured around guilds of scholars, warriors, and mystics who work together to maintain the balance of their realm.`;
+        
+        const history = options.history || `In ages past, this world was the site of a great convergence where multiple dimensions collided. The resulting fusion created unique laws of nature that govern reality itself. Legendary heroes once walked these lands, their deeds recorded in the very fabric of space-time. The Great War of the Ancients left scars that still pulse with residual magic, and the ruins of their cities hold secrets that scholars have spent millennia trying to unlock.`;
+        
+        const features = options.features && options.features.length > 0
+          ? options.features
+          : ["Floating Islands", "Crystal Caves", "Starlight Rivers", "Ancient Ruins", "Twin Moons"];
+
+        const feature = features[0] || "extraordinary phenomena";
+
+        const lore = template
+          .replace(/{name}/g, name)
+          .replace(/{era}/g, era)
+          .replace(/{geography}/g, geography)
+          .replace(/{culture}/g, culture)
+          .replace(/{history}/g, history)
+          .replace(/{feature}/g, feature);
+
+        resolve({
+          lore,
+          name,
+          era,
+          geography,
+          culture,
+          history,
+          features,
+        });
       }, 2500 + Math.random() * 1000);
     });
   }
