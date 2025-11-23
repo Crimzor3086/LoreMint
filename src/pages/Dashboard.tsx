@@ -1,15 +1,53 @@
+import { useState, useEffect } from "react";
 import { GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { ParticleBackground } from "@/components/ParticleBackground";
 import { Navbar } from "@/components/Navbar";
-import { mockCharacters, mockWorlds, mockPlotArcs, mockRoyaltySplits } from "@/mock";
 import { motion } from "framer-motion";
 import { Sparkles, Globe, BookOpen, Coins, TrendingUp, Users, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Character, World, PlotArc, RoyaltySplit } from "@/types";
+import { useWalletContext } from "@/context/WalletContext";
 
 const Dashboard = () => {
+  const { wallet } = useWalletContext();
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [worlds, setWorlds] = useState<World[]>([]);
+  const [plotArcs, setPlotArcs] = useState<PlotArc[]>([]);
+  const [royaltySplits, setRoyaltySplits] = useState<RoyaltySplit[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // TODO: Fetch user's characters, worlds, plots, and royalties from blockchain/API
+    // For now, initialize with empty arrays
+    const fetchUserData = async () => {
+      if (!wallet.isConnected || !wallet.address) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // TODO: Replace with actual blockchain/API calls
+        // const userCharacters = await fetchCharacters(wallet.address);
+        // const userWorlds = await fetchWorlds(wallet.address);
+        // const userPlots = await fetchPlotArcs(wallet.address);
+        // const userRoyalties = await fetchRoyaltySplits(wallet.address);
+        
+        // setCharacters(userCharacters);
+        // setWorlds(userWorlds);
+        // setPlotArcs(userPlots);
+        // setRoyaltySplits(userRoyalties);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [wallet.isConnected, wallet.address]);
   return (
     <div className="min-h-screen bg-background relative">
       <ParticleBackground />
@@ -32,10 +70,10 @@ const Dashboard = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {[
-            { label: "Characters", value: mockCharacters.length, icon: Users, color: "primary" as const },
-            { label: "Worlds", value: mockWorlds.length, icon: Globe, color: "emerald" as const },
-            { label: "Plot Arcs", value: mockPlotArcs.length, icon: BookOpen, color: "accent" as const },
-            { label: "Total Revenue", value: `$${mockRoyaltySplits.reduce((sum, r) => sum + r.totalRevenue, 0).toFixed(2)}`, icon: DollarSign, color: "gold" as const },
+            { label: "Characters", value: characters.length, icon: Users, color: "primary" as const },
+            { label: "Worlds", value: worlds.length, icon: Globe, color: "emerald" as const },
+            { label: "Plot Arcs", value: plotArcs.length, icon: BookOpen, color: "accent" as const },
+            { label: "Total Revenue", value: `$${royaltySplits.reduce((sum, r) => sum + r.totalRevenue, 0).toFixed(2)}`, icon: DollarSign, color: "gold" as const },
           ].map((stat, index) => (
             <motion.div
               key={stat.label}
@@ -119,7 +157,23 @@ const Dashboard = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mockCharacters.map((character, index) => (
+            {characters.length === 0 ? (
+              <div className="col-span-full">
+                <GlowCard className="p-12 text-center">
+                  <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-xl text-muted-foreground mb-4">
+                    No characters yet
+                  </p>
+                  <Link to="/character-builder">
+                    <GradientButton variant="cosmic">
+                      <Sparkles className="w-4 h-4 mr-2 inline" />
+                      Create Your First Character
+                    </GradientButton>
+                  </Link>
+                </GlowCard>
+              </div>
+            ) : (
+              characters.map((character, index) => (
               <motion.div
                 key={character.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -159,7 +213,8 @@ const Dashboard = () => {
                   </div>
                 </GlowCard>
               </motion.div>
-            ))}
+              ))
+            )}
           </div>
         </motion.div>
 
@@ -176,7 +231,23 @@ const Dashboard = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {mockWorlds.map((world, index) => (
+            {worlds.length === 0 ? (
+              <div className="col-span-full">
+                <GlowCard glowColor="emerald" className="p-12 text-center">
+                  <Globe className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-xl text-muted-foreground mb-4">
+                    No worlds yet
+                  </p>
+                  <Link to="/world-builder">
+                    <GradientButton variant="emerald">
+                      <Sparkles className="w-4 h-4 mr-2 inline" />
+                      Create Your First World
+                    </GradientButton>
+                  </Link>
+                </GlowCard>
+              </div>
+            ) : (
+              worlds.map((world, index) => (
               <motion.div
                 key={world.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -210,7 +281,8 @@ const Dashboard = () => {
                   </p>
                 </GlowCard>
               </motion.div>
-            ))}
+              ))
+            )}
           </div>
         </motion.div>
 
@@ -230,7 +302,18 @@ const Dashboard = () => {
             </TabsList>
 
             <TabsContent value="all" className="space-y-4">
-              {mockRoyaltySplits.map((royalty, index) => (
+              {royaltySplits.length === 0 ? (
+                <GlowCard glowColor="gold" className="p-12 text-center">
+                  <DollarSign className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-xl text-muted-foreground mb-2">
+                    No royalty distributions yet
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Royalties will appear here once you mint IP and receive contributions
+                  </p>
+                </GlowCard>
+              ) : (
+                royaltySplits.map((royalty, index) => (
                 <motion.div
                   key={royalty.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -270,13 +353,19 @@ const Dashboard = () => {
                     </p>
                   </GlowCard>
                 </motion.div>
-              ))}
+                ))
+              )}
             </TabsContent>
 
             <TabsContent value="characters">
-              {mockRoyaltySplits
-                .filter(r => r.assetType === "character")
-                .map((royalty, index) => (
+              {royaltySplits.filter(r => r.assetType === "character").length === 0 ? (
+                <GlowCard glowColor="gold" className="p-12 text-center">
+                  <p className="text-muted-foreground">No character royalties yet</p>
+                </GlowCard>
+              ) : (
+                royaltySplits
+                  .filter(r => r.assetType === "character")
+                  .map((royalty, index) => (
                   <motion.div
                     key={royalty.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -302,13 +391,19 @@ const Dashboard = () => {
                       </div>
                     </GlowCard>
                   </motion.div>
-                ))}
+                  ))
+              )}
             </TabsContent>
 
             <TabsContent value="worlds">
-              {mockRoyaltySplits
-                .filter(r => r.assetType === "world")
-                .map((royalty, index) => (
+              {royaltySplits.filter(r => r.assetType === "world").length === 0 ? (
+                <GlowCard glowColor="gold" className="p-12 text-center">
+                  <p className="text-muted-foreground">No world royalties yet</p>
+                </GlowCard>
+              ) : (
+                royaltySplits
+                  .filter(r => r.assetType === "world")
+                  .map((royalty, index) => (
                   <motion.div
                     key={royalty.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -334,7 +429,8 @@ const Dashboard = () => {
                       </div>
                     </GlowCard>
                   </motion.div>
-                ))}
+                  ))
+              )}
             </TabsContent>
           </Tabs>
         </motion.div>

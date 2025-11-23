@@ -1,22 +1,19 @@
 /**
- * Story L1 Smart Contract Deployment Script
+ * Mantle Smart Contract Deployment Script
  * 
- * This script deploys LoreMint contracts to Story L1 blockchain
+ * This script deploys LoreMint contracts to Mantle network
  * 
  * Usage:
- *   npx hardhat run scripts/deployStory.ts --network story
+ *   npx hardhat run scripts/deployMantle.ts --network mantle
  */
 
 import { ethers } from "ethers";
 
-// Contract ABIs would be imported here
-// import CharacterTokenABI from "../artifacts/contracts/CharacterToken.sol/CharacterToken.json";
-
 async function main() {
-  console.log("Deploying LoreMint contracts to Story L1...");
+  console.log("Deploying LoreMint contracts to Mantle...");
 
   // Initialize provider and signer
-  // const provider = new ethers.providers.JsonRpcProvider(process.env.STORY_RPC_URL);
+  // const provider = new ethers.providers.JsonRpcProvider(process.env.MANTLE_RPC_URL);
   // const signer = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
 
   // Deploy CharacterToken
@@ -32,6 +29,9 @@ async function main() {
   // Similar for WorldToken, PlotToken, ContributionManager...
 
   console.log("Deployment complete!");
+  console.log("Update contract addresses in:");
+  console.log("  - .env file");
+  console.log("  - src/lib/blockchain/contracts.ts");
 }
 
 main()

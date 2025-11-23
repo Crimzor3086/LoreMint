@@ -5,8 +5,10 @@ interface WalletContextType {
   wallet: WalletState;
   connect: () => Promise<void>;
   disconnect: () => void;
+  refreshBalance: () => Promise<void>;
   isConnecting: boolean;
   error: string | null;
+  isMetaMaskInstalled: boolean;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);

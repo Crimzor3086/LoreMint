@@ -10,6 +10,11 @@ export interface MintResult {
   contractAddress: string;
 }
 
+// Placeholder ABI - replace with actual contract ABIs
+const ERC721_MINT_ABI = [
+  "function mint(address to, string memory name, string memory description) public returns (uint256)",
+];
+
 export function useMint() {
   const { wallet } = useWalletContext();
   const [isMinting, setIsMinting] = useState(false);
@@ -40,19 +45,26 @@ export function useMint() {
 
       const contract = CONTRACTS[contractName];
 
-      // Mint NFT
+      // Check if contract is deployed
+      if (contract.address === "0x0000000000000000000000000000000000000000") {
+        throw new Error("Contract not deployed yet");
+      }
+
+      // Mint NFT - Note: This requires the actual contract ABI
+      // For now, using placeholder ABI. Replace with actual ABI from contracts
       const txHash = await writeContract(
         contractName,
+        ERC721_MINT_ABI,
         "mint",
-        [wallet.address, metadata],
-        "0" // No value for minting
+        [wallet.address, metadata.name, metadata.description]
       );
 
       // Wait for confirmation
-      await waitForTransaction(txHash);
+      const receipt = await waitForTransaction(txHash);
 
-      // Mock token ID - in real implementation, get from contract event
-      const tokenId = Math.floor(Math.random() * 1000000).toString();
+      // Extract token ID from transaction receipt logs
+      // In real implementation, parse the Transfer event to get tokenId
+      const tokenId = receipt.logs?.[0]?.topics?.[3] || "0";
 
       return {
         tokenId,

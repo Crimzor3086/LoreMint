@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-LoreMint is a decentralized platform that empowers creators to mint, expand, and monetize entire story universes as programmable IP assets on the Story blockchain. Leveraging AI, creators can generate characters, lore, timelines, and world-building elements while retaining full ownership and attribution.
+LoreMint is a decentralized platform that empowers creators to mint, expand, and monetize entire story universes as programmable IP assets on the Mantle blockchain. Leveraging AI, creators can generate characters, lore, timelines, and world-building elements while retaining full ownership and attribution.
 
 ## Project Structure
 
@@ -57,7 +57,7 @@ Create a `.env` file in the root directory with the following variables:
 ```env
 # Alchemy API Configuration
 VITE_ALCHEMY_API_KEY=your_alchemy_api_key_here
-VITE_POLYGON_RPC_URL=https://polygon-mainnet.g.alchemy.com/v2/YOUR_API_KEY
+VITE_MANTLE_RPC_URL=https://mantle-mainnet.g.alchemy.com/v2/YOUR_API_KEY
 
 # Contract Addresses (update after deployment)
 VITE_CHARACTER_TOKEN_ADDRESS=0x0000000000000000000000000000000000000000
