@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
@@ -8,35 +8,85 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { mockCharacters, mockWorlds, mockPlotArcs } from "@/mock";
-import { Coins, User, Globe, BookOpen, CheckCircle, Sparkles, Wallet } from "lucide-react";
+import { Character, World, PlotArc } from "@/types";
+import { useWalletContext } from "@/context/WalletContext";
+import { useMint } from "@/hooks/useMint";
+import { Coins, User, Globe, BookOpen, CheckCircle, Sparkles, Wallet, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
 const MintIP = () => {
-  const [selectedCharacter, setSelectedCharacter] = useState<string | null>(null);
-  const [selectedWorld, setSelectedWorld] = useState<string | null>(null);
-  const [selectedPlot, setSelectedPlot] = useState<string | null>(null);
+  const { wallet } = useWalletContext();
+  const { mint, isMinting, error } = useMint();
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [worlds, setWorlds] = useState<World[]>([]);
+  const [plotArcs, setPlotArcs] = useState<PlotArc[]>([]);
   const [royaltyPercentage, setRoyaltyPercentage] = useState("10");
-  const [isMinting, setIsMinting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [mintedAssets, setMintedAssets] = useState<Set<string>>(new Set());
 
-  const handleMint = async (type: "character" | "world" | "plot", id: string) => {
-    setIsMinting(true);
-    // Simulate blockchain minting
-    setTimeout(() => {
-      setIsMinting(false);
-      toast.success(`${type} minted successfully as IP token!`);
-      
-      // Update selection
-      if (type === "character") setSelectedCharacter(id);
-      if (type === "world") setSelectedWorld(id);
-      if (type === "plot") setSelectedPlot(id);
-    }, 2000);
+  useEffect(() => {
+    // TODO: Fetch user's unminted characters, worlds, and plots from blockchain/API
+    const fetchUnmintedAssets = async () => {
+      if (!wallet.isConnected || !wallet.address) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // TODO: Replace with actual blockchain/API calls
+        // const userCharacters = await fetchCharacters(wallet.address);
+        // const userWorlds = await fetchWorlds(wallet.address);
+        // const userPlots = await fetchPlotArcs(wallet.address);
+        
+        // Filter out already minted assets
+        // const unmintedChars = userCharacters.filter(c => !c.mintedAsIP);
+        // const unmintedWorlds = userWorlds.filter(w => !w.mintedAsIP);
+        // const unmintedPlots = userPlots.filter(p => p.status !== "minted");
+        
+        // setCharacters(unmintedChars);
+        // setWorlds(unmintedWorlds);
+        // setPlotArcs(unmintedPlots);
+      } catch (error) {
+        console.error("Error fetching unminted assets:", error);
+        toast.error("Failed to load assets");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUnmintedAssets();
+  }, [wallet.isConnected, wallet.address]);
+
+  const handleMint = async (type: "character" | "world" | "plot", id: string, metadata: { name: string; description: string }) => {
+    if (!wallet.isConnected) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+
+    try {
+      const result = await mint(type, {
+        name: metadata.name,
+        description: metadata.description,
+        attributes: {
+          royaltyPercentage: parseFloat(royaltyPercentage),
+        },
+      });
+
+      if (result) {
+        toast.success(`${type} minted successfully as IP token!`);
+        setMintedAssets((prev) => new Set([...prev, id]));
+        // TODO: Refresh the asset list from blockchain
+      }
+    } catch (err) {
+      console.error("Minting error:", err);
+      toast.error(error || "Failed to mint asset");
+    }
   };
 
-  const unmintedCharacters = mockCharacters.filter(c => !c.mintedAsIP);
-  const unmintedWorlds = mockWorlds.filter(w => !w.mintedAsIP);
-  const unmintedPlots = mockPlotArcs.filter(p => p.status !== "minted");
+  const unmintedCharacters = characters.filter(c => !c.mintedAsIP && !mintedAssets.has(c.id));
+  const unmintedWorlds = worlds.filter(w => !w.mintedAsIP && !mintedAssets.has(w.id));
+  const unmintedPlots = plotArcs.filter(p => p.status !== "minted" && !mintedAssets.has(p.id));
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -52,7 +102,7 @@ const MintIP = () => {
             Mint Intellectual Property
           </h1>
           <p className="text-xl text-muted-foreground">
-            Tokenize your creations on the Story blockchain
+            Tokenize your creations on the Mantle blockchain
           </p>
         </motion.div>
 
@@ -117,11 +167,31 @@ const MintIP = () => {
 
             {/* Characters Tab */}
             <TabsContent value="characters" className="space-y-6">
-              {unmintedCharacters.length === 0 ? (
+              {!wallet.isConnected ? (
+                <GlowCard className="p-12 text-center">
+                  <AlertCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-xl text-muted-foreground mb-4">
+                    Connect your wallet to mint IP
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    You need to connect your MetaMask wallet to view and mint your characters
+                  </p>
+                </GlowCard>
+              ) : isLoading ? (
+                <GlowCard className="p-12 text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading your characters...</p>
+                </GlowCard>
+              ) : unmintedCharacters.length === 0 ? (
                 <GlowCard className="p-12 text-center">
                   <User className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <p className="text-xl text-muted-foreground mb-4">
-                    All characters have been minted!
+                  <p className="text-xl text-muted-foreground mb-2">
+                    {characters.length === 0 ? "No characters created yet" : "All characters have been minted!"}
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    {characters.length === 0 
+                      ? "Create your first character to start minting IP tokens"
+                      : "Create new characters to mint more IP tokens"}
                   </p>
                   <Link to="/character-builder">
                     <GradientButton variant="cosmic">
@@ -152,7 +222,7 @@ const MintIP = () => {
                                 {character.backstory}
                               </p>
                             </div>
-                            {selectedCharacter === character.id && (
+                            {mintedAssets.has(character.id) && (
                               <Badge className="bg-emerald/20 text-emerald flex items-center gap-1">
                                 <CheckCircle className="w-4 h-4" />
                                 Minted
@@ -168,12 +238,15 @@ const MintIP = () => {
                           </div>
                           <GradientButton
                             variant="gold"
-                            onClick={() => handleMint("character", character.id)}
-                            disabled={isMinting || selectedCharacter === character.id}
+                            onClick={() => handleMint("character", character.id, {
+                              name: character.name,
+                              description: character.backstory || "",
+                            })}
+                            disabled={isMinting || mintedAssets.has(character.id)}
                             className="w-full md:w-auto"
                           >
                             <Coins className="w-4 h-4 mr-2 inline" />
-                            {isMinting ? "Minting..." : selectedCharacter === character.id ? "Minted" : "Mint as IP"}
+                            {isMinting ? "Minting..." : mintedAssets.has(character.id) ? "Minted" : "Mint as IP"}
                           </GradientButton>
                         </div>
                       </div>
@@ -185,11 +258,31 @@ const MintIP = () => {
 
             {/* Worlds Tab */}
             <TabsContent value="worlds" className="space-y-6">
-              {unmintedWorlds.length === 0 ? (
+              {!wallet.isConnected ? (
+                <GlowCard className="p-12 text-center">
+                  <AlertCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-xl text-muted-foreground mb-4">
+                    Connect your wallet to mint IP
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    You need to connect your MetaMask wallet to view and mint your worlds
+                  </p>
+                </GlowCard>
+              ) : isLoading ? (
+                <GlowCard className="p-12 text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading your worlds...</p>
+                </GlowCard>
+              ) : unmintedWorlds.length === 0 ? (
                 <GlowCard className="p-12 text-center">
                   <Globe className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <p className="text-xl text-muted-foreground mb-4">
-                    All worlds have been minted!
+                  <p className="text-xl text-muted-foreground mb-2">
+                    {worlds.length === 0 ? "No worlds created yet" : "All worlds have been minted!"}
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    {worlds.length === 0 
+                      ? "Create your first world to start minting IP tokens"
+                      : "Create new worlds to mint more IP tokens"}
                   </p>
                   <Link to="/world-builder">
                     <GradientButton variant="emerald">
@@ -221,7 +314,7 @@ const MintIP = () => {
                                 {world.description}
                               </p>
                             </div>
-                            {selectedWorld === world.id && (
+                            {mintedAssets.has(world.id) && (
                               <Badge className="bg-emerald/20 text-emerald flex items-center gap-1">
                                 <CheckCircle className="w-4 h-4" />
                                 Minted
@@ -230,12 +323,15 @@ const MintIP = () => {
                           </div>
                           <GradientButton
                             variant="gold"
-                            onClick={() => handleMint("world", world.id)}
-                            disabled={isMinting || selectedWorld === world.id}
+                            onClick={() => handleMint("world", world.id, {
+                              name: world.name,
+                              description: world.description || "",
+                            })}
+                            disabled={isMinting || mintedAssets.has(world.id)}
                             className="w-full md:w-auto"
                           >
                             <Coins className="w-4 h-4 mr-2 inline" />
-                            {isMinting ? "Minting..." : selectedWorld === world.id ? "Minted" : "Mint as IP"}
+                            {isMinting ? "Minting..." : mintedAssets.has(world.id) ? "Minted" : "Mint as IP"}
                           </GradientButton>
                         </div>
                       </div>
@@ -247,11 +343,31 @@ const MintIP = () => {
 
             {/* Plot Arcs Tab */}
             <TabsContent value="plots" className="space-y-6">
-              {unmintedPlots.length === 0 ? (
+              {!wallet.isConnected ? (
+                <GlowCard className="p-12 text-center">
+                  <AlertCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-xl text-muted-foreground mb-4">
+                    Connect your wallet to mint IP
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    You need to connect your MetaMask wallet to view and mint your plot arcs
+                  </p>
+                </GlowCard>
+              ) : isLoading ? (
+                <GlowCard className="p-12 text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading your plot arcs...</p>
+                </GlowCard>
+              ) : unmintedPlots.length === 0 ? (
                 <GlowCard className="p-12 text-center">
                   <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <p className="text-xl text-muted-foreground mb-4">
-                    All plot arcs have been minted!
+                  <p className="text-xl text-muted-foreground mb-2">
+                    {plotArcs.length === 0 ? "No plot arcs created yet" : "All plot arcs have been minted!"}
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    {plotArcs.length === 0 
+                      ? "Create your first plot arc to start minting IP tokens"
+                      : "Create new plot arcs to mint more IP tokens"}
                   </p>
                   <GradientButton variant="accent">
                     <Sparkles className="w-4 h-4 mr-2 inline" />
@@ -277,7 +393,7 @@ const MintIP = () => {
                             <span>Status: {plot.status}</span>
                           </div>
                         </div>
-                        {selectedPlot === plot.id && (
+                        {mintedAssets.has(plot.id) && (
                           <Badge className="bg-emerald/20 text-emerald flex items-center gap-1">
                             <CheckCircle className="w-4 h-4" />
                             Minted
@@ -286,12 +402,15 @@ const MintIP = () => {
                       </div>
                       <GradientButton
                         variant="gold"
-                        onClick={() => handleMint("plot", plot.id)}
-                        disabled={isMinting || selectedPlot === plot.id}
+                        onClick={() => handleMint("plot", plot.id, {
+                          name: plot.title,
+                          description: plot.description || "",
+                        })}
+                        disabled={isMinting || mintedAssets.has(plot.id)}
                         className="w-full md:w-auto"
                       >
                         <Coins className="w-4 h-4 mr-2 inline" />
-                        {isMinting ? "Minting..." : selectedPlot === plot.id ? "Minted" : "Mint as IP"}
+                        {isMinting ? "Minting..." : mintedAssets.has(plot.id) ? "Minted" : "Mint as IP"}
                       </GradientButton>
                     </GlowCard>
                   </motion.div>
@@ -314,7 +433,7 @@ const MintIP = () => {
               <div>
                 <h3 className="text-lg font-bold mb-2">About IP Minting</h3>
                 <p className="text-muted-foreground">
-                  When you mint your creations as IP tokens, they become permanent, on-chain assets on the Story blockchain. 
+                  When you mint your creations as IP tokens, they become permanent, on-chain assets on the Mantle blockchain. 
                   This ensures provenance, enables automatic royalty distribution, and allows for future licensing and collaboration opportunities.
                 </p>
               </div>

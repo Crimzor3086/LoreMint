@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
@@ -12,37 +12,144 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { mockContributions } from "@/mock";
-import { ThumbsUp, MessageSquare, CheckCircle, Clock, Sparkles } from "lucide-react";
+import { Contribution } from "@/types";
+import { useWalletContext } from "@/context/WalletContext";
+import { ThumbsUp, MessageSquare, CheckCircle, Clock, Sparkles, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const Community = () => {
+  const { wallet } = useWalletContext();
+  const [contributions, setContributions] = useState<Contribution[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [contributionType, setContributionType] = useState<string>("");
   const [contributionTitle, setContributionTitle] = useState("");
   const [contributionDescription, setContributionDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [votedContributions, setVotedContributions] = useState<Set<string>>(new Set());
 
-  const handleVote = (id: string) => {
-    toast.success("Vote submitted!");
+  useEffect(() => {
+    // TODO: Fetch contributions from blockchain/API
+    const fetchContributions = async () => {
+      setIsLoading(true);
+      try {
+        // TODO: Replace with actual blockchain/API calls
+        // const allContributions = await fetchContributions();
+        // setContributions(allContributions);
+      } catch (error) {
+        console.error("Error fetching contributions:", error);
+        toast.error("Failed to load contributions");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchContributions();
+  }, []);
+
+  const handleVote = async (id: string) => {
+    if (!wallet.isConnected) {
+      toast.error("Please connect your wallet to vote");
+      return;
+    }
+
+    if (votedContributions.has(id)) {
+      toast.info("You have already voted for this contribution");
+      return;
+    }
+
+    try {
+      // TODO: Replace with actual blockchain/API call
+      // await voteContribution(id, wallet.address);
+      setVotedContributions((prev) => new Set([...prev, id]));
+      setContributions((prev) =>
+        prev.map((c) =>
+          c.id === id ? { ...c, votes: c.votes + 1 } : c
+        )
+      );
+      toast.success("Vote submitted!");
+    } catch (error) {
+      console.error("Error voting:", error);
+      toast.error("Failed to submit vote");
+    }
   };
 
   const handleSubmitContribution = async () => {
+    if (!wallet.isConnected) {
+      toast.error("Please connect your wallet to submit a contribution");
+      return;
+    }
+
     if (!contributionType || !contributionTitle || !contributionDescription) {
       toast.error("Please fill in all fields");
       return;
     }
 
     setIsSubmitting(true);
-    // Simulate submission
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      // TODO: Replace with actual blockchain/API call
+      // const newContribution = await submitContribution({
+      //   type: contributionType as Contribution["type"],
+      //   title: contributionTitle,
+      //   description: contributionDescription,
+      //   contributorAddress: wallet.address!,
+      // });
+      
+      // setContributions((prev) => [newContribution, ...prev]);
+      
       setIsDialogOpen(false);
       setContributionType("");
       setContributionTitle("");
       setContributionDescription("");
       toast.success("Contribution submitted! It will be reviewed by the community.");
-    }, 1500);
+    } catch (error) {
+      console.error("Error submitting contribution:", error);
+      toast.error("Failed to submit contribution");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleApprove = async (id: string) => {
+    if (!wallet.isConnected) {
+      toast.error("Please connect your wallet");
+      return;
+    }
+
+    try {
+      // TODO: Replace with actual blockchain/API call
+      // await approveContribution(id, wallet.address);
+      setContributions((prev) =>
+        prev.map((c) =>
+          c.id === id ? { ...c, status: "approved" as const } : c
+        )
+      );
+      toast.success("Contribution approved!");
+    } catch (error) {
+      console.error("Error approving contribution:", error);
+      toast.error("Failed to approve contribution");
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    if (!wallet.isConnected) {
+      toast.error("Please connect your wallet");
+      return;
+    }
+
+    try {
+      // TODO: Replace with actual blockchain/API call
+      // await rejectContribution(id, wallet.address);
+      setContributions((prev) =>
+        prev.map((c) =>
+          c.id === id ? { ...c, status: "rejected" as const } : c
+        )
+      );
+      toast.success("Contribution rejected");
+    } catch (error) {
+      console.error("Error rejecting contribution:", error);
+      toast.error("Failed to reject contribution");
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -94,7 +201,32 @@ const Community = () => {
             </TabsList>
 
             <TabsContent value="all" className="space-y-6">
-              {mockContributions.map((contribution, index) => (
+              {isLoading ? (
+                <GlowCard className="p-12 text-center">
+                  <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
+                  <p className="text-muted-foreground">Loading contributions...</p>
+                </GlowCard>
+              ) : contributions.length === 0 ? (
+                <GlowCard className="p-12 text-center">
+                  <MessageSquare className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-xl text-muted-foreground mb-2">
+                    No contributions yet
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Be the first to contribute to the storyworld!
+                  </p>
+                  {wallet.isConnected && (
+                    <GradientButton
+                      variant="magic"
+                      onClick={() => setIsDialogOpen(true)}
+                    >
+                      <Sparkles className="w-4 h-4 mr-2 inline" />
+                      Submit Your Contribution
+                    </GradientButton>
+                  )}
+                </GlowCard>
+              ) : (
+                contributions.map((contribution, index) => (
                 <motion.div
                   key={contribution.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -159,20 +291,130 @@ const Community = () => {
                     </div>
                   </GlowCard>
                 </motion.div>
-              ))}
+                ))
+              )}
             </TabsContent>
 
             <TabsContent value="submissions">
-              <p className="text-center text-muted-foreground py-12">
-                Your submitted contributions will appear here
-              </p>
+              {!wallet.isConnected ? (
+                <GlowCard className="p-12 text-center">
+                  <AlertCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-xl text-muted-foreground mb-4">
+                    Connect your wallet to view your submissions
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Connect your MetaMask wallet to see contributions you've submitted
+                  </p>
+                </GlowCard>
+              ) : isLoading ? (
+                <GlowCard className="p-12 text-center">
+                  <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
+                  <p className="text-muted-foreground">Loading your submissions...</p>
+                </GlowCard>
+              ) : contributions.filter(c => c.contributorAddress.toLowerCase() === wallet.address?.toLowerCase()).length === 0 ? (
+                <GlowCard className="p-12 text-center">
+                  <MessageSquare className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-xl text-muted-foreground mb-2">
+                    No submissions yet
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Submit your first contribution to expand the storyworld!
+                  </p>
+                  <GradientButton
+                    variant="magic"
+                    onClick={() => setIsDialogOpen(true)}
+                  >
+                    <Sparkles className="w-4 h-4 mr-2 inline" />
+                    Submit Your Contribution
+                  </GradientButton>
+                </GlowCard>
+              ) : (
+                <div className="space-y-6">
+                  {contributions
+                    .filter(c => c.contributorAddress.toLowerCase() === wallet.address?.toLowerCase())
+                    .map((contribution, index) => (
+                      <motion.div
+                        key={contribution.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        whileHover={{ y: -5 }}
+                      >
+                        <GlowCard className="hover-tilt">
+                          <div className="flex flex-col md:flex-row gap-6">
+                            <div className="flex items-start gap-4 md:w-1/4">
+                              <Avatar className="w-12 h-12 border-2 border-primary">
+                                <AvatarFallback className="bg-gradient-cosmic text-white">
+                                  {contribution.contributorAddress.slice(2, 4).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <p className="text-sm text-muted-foreground mb-1">
+                                  {contribution.contributorAddress.slice(0, 6)}...{contribution.contributorAddress.slice(-4)}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(contribution.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between mb-3">
+                                <div>
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Badge className="capitalize">
+                                      {contribution.type}
+                                    </Badge>
+                                    <Badge className={getStatusColor(contribution.status)}>
+                                      {getStatusIcon(contribution.status)}
+                                      <span className="ml-1 capitalize">{contribution.status}</span>
+                                    </Badge>
+                                  </div>
+                                  <h3 className="text-xl font-bold mb-2">{contribution.title}</h3>
+                                </div>
+                              </div>
+                              <p className="text-muted-foreground mb-4">
+                                {contribution.description}
+                              </p>
+                              <div className="flex items-center gap-4">
+                                <button
+                                  onClick={() => handleVote(contribution.id)}
+                                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                                  disabled={votedContributions.has(contribution.id)}
+                                >
+                                  <ThumbsUp className="w-4 h-4" />
+                                  <span>{contribution.votes}</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </GlowCard>
+                      </motion.div>
+                    ))}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="approved">
-              <div className="space-y-6">
-                {mockContributions
-                  .filter(c => c.status === "approved")
-                  .map((contribution, index) => (
+              {isLoading ? (
+                <GlowCard className="p-12 text-center">
+                  <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
+                  <p className="text-muted-foreground">Loading approved contributions...</p>
+                </GlowCard>
+              ) : contributions.filter(c => c.status === "approved").length === 0 ? (
+                <GlowCard className="p-12 text-center">
+                  <CheckCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-xl text-muted-foreground mb-2">
+                    No approved contributions yet
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Approved contributions will appear here
+                  </p>
+                </GlowCard>
+              ) : (
+                <div className="space-y-6">
+                  {contributions
+                    .filter(c => c.status === "approved")
+                    .map((contribution, index) => (
                     <motion.div
                       key={contribution.id}
                       initial={{ opacity: 0, y: 20 }}
@@ -201,14 +443,41 @@ const Community = () => {
                       </GlowCard>
                     </motion.div>
                   ))}
-              </div>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="pending">
-              <div className="space-y-6">
-                {mockContributions
-                  .filter(c => c.status === "pending")
-                  .map((contribution, index) => (
+              {!wallet.isConnected ? (
+                <GlowCard className="p-12 text-center">
+                  <AlertCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-xl text-muted-foreground mb-4">
+                    Connect your wallet to review contributions
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Connect your MetaMask wallet to review and approve pending contributions
+                  </p>
+                </GlowCard>
+              ) : isLoading ? (
+                <GlowCard className="p-12 text-center">
+                  <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
+                  <p className="text-muted-foreground">Loading pending contributions...</p>
+                </GlowCard>
+              ) : contributions.filter(c => c.status === "pending").length === 0 ? (
+                <GlowCard className="p-12 text-center">
+                  <Clock className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-xl text-muted-foreground mb-2">
+                    No pending contributions
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    All contributions have been reviewed
+                  </p>
+                </GlowCard>
+              ) : (
+                <div className="space-y-6">
+                  {contributions
+                    .filter(c => c.status === "pending")
+                    .map((contribution, index) => (
                     <motion.div
                       key={contribution.id}
                       initial={{ opacity: 0, y: 20 }}
@@ -233,11 +502,19 @@ const Community = () => {
                             <h3 className="text-xl font-bold mb-2">{contribution.title}</h3>
                             <p className="text-muted-foreground mb-4">{contribution.description}</p>
                             <div className="flex gap-2">
-                              <GradientButton size="sm" variant="emerald">
+                              <GradientButton 
+                                size="sm" 
+                                variant="emerald"
+                                onClick={() => handleApprove(contribution.id)}
+                              >
                                 Approve
                               </GradientButton>
-                              <GradientButton size="sm" variant="cosmic">
-                                Request Changes
+                              <GradientButton 
+                                size="sm" 
+                                variant="cosmic"
+                                onClick={() => handleReject(contribution.id)}
+                              >
+                                Reject
                               </GradientButton>
                             </div>
                           </div>
@@ -245,7 +522,8 @@ const Community = () => {
                       </GlowCard>
                     </motion.div>
                   ))}
-              </div>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </motion.div>
