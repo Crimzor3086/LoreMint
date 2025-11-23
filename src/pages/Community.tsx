@@ -42,7 +42,7 @@ const Community = () => {
     try {
       await vote(id);
       setVotedContributions((prev) => new Set([...prev, id]));
-      toast.success("Vote submitted!");
+    toast.success("Vote submitted!");
     } catch (error) {
       console.error("Error voting:", error);
       toast.error("Failed to submit vote");
@@ -373,10 +373,10 @@ const Community = () => {
                   </p>
                 </GlowCard>
               ) : (
-                <div className="space-y-6">
+              <div className="space-y-6">
                   {contributions
-                    .filter(c => c.status === "approved")
-                    .map((contribution, index) => (
+                  .filter(c => c.status === "approved")
+                  .map((contribution, index) => (
                     <motion.div
                       key={contribution.id}
                       initial={{ opacity: 0, y: 20 }}
@@ -405,7 +405,7 @@ const Community = () => {
                       </GlowCard>
                     </motion.div>
                   ))}
-                </div>
+              </div>
               )}
             </TabsContent>
 
@@ -436,10 +436,10 @@ const Community = () => {
                   </p>
                 </GlowCard>
               ) : (
-                <div className="space-y-6">
+              <div className="space-y-6">
                   {contributions
-                    .filter(c => c.status === "pending")
-                    .map((contribution, index) => (
+                  .filter(c => c.status === "pending")
+                  .map((contribution, index) => (
                     <motion.div
                       key={contribution.id}
                       initial={{ opacity: 0, y: 20 }}
@@ -484,7 +484,7 @@ const Community = () => {
                       </GlowCard>
                     </motion.div>
                   ))}
-                </div>
+              </div>
               )}
             </TabsContent>
           </Tabs>

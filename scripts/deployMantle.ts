@@ -8,10 +8,11 @@
  *   npx hardhat run scripts/deployMantle.ts --network mantleTestnet
  */
 
-import { ethers } from "hardhat";
 import hre from "hardhat";
-import * as fs from "fs";
-import * as path from "path";
+import pkg from "hardhat";
+const { ethers } = pkg;
+import fs from "fs";
+import path from "path";
 
 async function main() {
   const [deployer] = await ethers.getSigners();

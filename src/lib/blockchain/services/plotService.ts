@@ -23,34 +23,57 @@ export interface PlotMetadata {
 export async function getUserPlots(address: string): Promise<PlotArc[]> {
   try {
     const contract = getContractInstance("PLOT_TOKEN", PlotTokenABI);
-    const balance = await contract.balanceOf(address);
+    
+    let balance: bigint;
+    try {
+      balance = await contract.balanceOf(address);
+    } catch (error: any) {
+      if (error?.message?.includes("not deployed") || error?.code === "BAD_DATA") {
+        console.warn("PlotToken contract not deployed or invalid address");
+        return [];
+      }
+      throw error;
+    }
+
+    if (balance === 0n) {
+      return [];
+    }
+
     const plots: PlotArc[] = [];
 
-    for (let i = 0; i < Number(balance); i++) {
-      const tokenId = await contract.tokenOfOwnerByIndex(address, i);
-      const metadata = await contract.plots(tokenId);
-      
-      plots.push({
-        id: tokenId.toString(),
-        title: metadata.title,
-        description: metadata.description,
-        characters: metadata.characterIds.map((id: bigint) => id.toString()),
-        worldId: metadata.worldId.toString(),
-        creator: metadata.creator,
-        createdAt: new Date(Number(metadata.createdAt) * 1000),
-        status: "minted",
-      });
+    try {
+      for (let i = 0; i < Number(balance); i++) {
+        try {
+          const tokenId = await contract.tokenOfOwnerByIndex(address, i);
+          const metadata = await contract.plots(tokenId);
+          
+          plots.push({
+            id: tokenId.toString(),
+            title: metadata.title,
+            description: metadata.description,
+            characters: metadata.characterIds.map((id: bigint) => id.toString()),
+            worldId: metadata.worldId.toString(),
+            creator: metadata.creator,
+            createdAt: new Date(Number(metadata.createdAt) * 1000),
+            status: "minted",
+          });
+        } catch (err) {
+          break;
+        }
+      }
+    } catch (error: any) {
+      console.warn("PlotToken doesn't support token enumeration");
+      return [];
     }
 
     return plots;
   } catch (error: any) {
-    // If contract not deployed, return empty array
-    if (error?.message?.includes("not deployed")) {
-      console.warn("PlotToken contract not deployed yet");
+    if (error?.message?.includes("not deployed") || error?.code === "BAD_DATA") {
+      console.warn("PlotToken contract not deployed yet or invalid");
       return [];
     }
     console.error("Error fetching user plots:", error);
-    throw error;
+    return [];
   }
 }
 

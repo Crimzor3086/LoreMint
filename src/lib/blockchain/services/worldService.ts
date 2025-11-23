@@ -25,35 +25,58 @@ export interface WorldMetadata {
 export async function getUserWorlds(address: string): Promise<World[]> {
   try {
     const contract = getContractInstance("WORLD_TOKEN", WorldTokenABI);
-    const balance = await contract.balanceOf(address);
+    
+    let balance: bigint;
+    try {
+      balance = await contract.balanceOf(address);
+    } catch (error: any) {
+      if (error?.message?.includes("not deployed") || error?.code === "BAD_DATA") {
+        console.warn("WorldToken contract not deployed or invalid address");
+        return [];
+      }
+      throw error;
+    }
+
+    if (balance === 0n) {
+      return [];
+    }
+
     const worlds: World[] = [];
 
-    for (let i = 0; i < Number(balance); i++) {
-      const tokenId = await contract.tokenOfOwnerByIndex(address, i);
-      const metadata = await contract.worlds(tokenId);
-      
-      worlds.push({
-        id: tokenId.toString(),
-        name: metadata.name,
-        geography: metadata.geography,
-        culture: metadata.culture,
-        era: metadata.era,
-        description: metadata.description,
-        creator: metadata.creator,
-        createdAt: new Date(Number(metadata.createdAt) * 1000),
-        mintedAsIP: true,
-      });
+    try {
+      for (let i = 0; i < Number(balance); i++) {
+        try {
+          const tokenId = await contract.tokenOfOwnerByIndex(address, i);
+          const metadata = await contract.worlds(tokenId);
+          
+          worlds.push({
+            id: tokenId.toString(),
+            name: metadata.name,
+            geography: metadata.geography,
+            culture: metadata.culture,
+            era: metadata.era,
+            description: metadata.description,
+            creator: metadata.creator,
+            createdAt: new Date(Number(metadata.createdAt) * 1000),
+            mintedAsIP: true,
+          });
+        } catch (err) {
+          break;
+        }
+      }
+    } catch (error: any) {
+      console.warn("WorldToken doesn't support token enumeration");
+      return [];
     }
 
     return worlds;
   } catch (error: any) {
-    // If contract not deployed, return empty array
-    if (error?.message?.includes("not deployed")) {
-      console.warn("WorldToken contract not deployed yet");
+    if (error?.message?.includes("not deployed") || error?.code === "BAD_DATA") {
+      console.warn("WorldToken contract not deployed yet or invalid");
       return [];
     }
     console.error("Error fetching user worlds:", error);
-    throw error;
+    return [];
   }
 }
 

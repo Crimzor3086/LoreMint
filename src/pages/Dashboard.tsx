@@ -313,7 +313,7 @@ const Dashboard = () => {
               </div>
             </GlowCard>
           ) : (
-            <Tabs defaultValue="all" className="w-full">
+          <Tabs defaultValue="all" className="w-full">
               <TabsList className="grid w-full grid-cols-3 max-w-xl mb-8 bg-secondary">
                 <TabsTrigger value="all" className="flex items-center gap-2">
                   <Coins className="w-4 h-4" />
@@ -327,7 +327,7 @@ const Dashboard = () => {
                   <Globe className="w-4 h-4" />
                   Worlds ({royaltySplits.filter(r => r.assetType === "world").length})
                 </TabsTrigger>
-              </TabsList>
+            </TabsList>
 
               <TabsContent value="all" className="space-y-6">
                 {royaltySplits.map((royalty, index) => {
@@ -335,21 +335,21 @@ const Dashboard = () => {
                   const totalContributorPercentage = royalty.contributors.reduce((sum, c) => sum + c.percentage, 0);
                   
                   return (
-                    <motion.div
-                      key={royalty.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
+                <motion.div
+                  key={royalty.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1 + index * 0.1 }}
-                      whileHover={{ y: -5 }}
-                    >
+                  whileHover={{ y: -5 }}
+                >
                       <GlowCard glowColor="gold" className="hover-tilt overflow-hidden">
                         {/* Header */}
                         <div className="flex items-start justify-between mb-6 pb-4 border-b border-gold/20">
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-3">
                               <Badge className="capitalize bg-gold/20 text-gold border-gold/30 px-3 py-1">
-                                {royalty.assetType}
-                              </Badge>
+                            {royalty.assetType}
+                          </Badge>
                               <h3 className="text-2xl font-bold">{royalty.assetName}</h3>
                             </div>
                             <div className="flex items-center gap-6 text-sm">
@@ -429,11 +429,11 @@ const Dashboard = () => {
                                           className="h-full bg-gradient-to-r from-primary to-purple-500"
                                         />
                                       </div>
-                                    </div>
+                      </div>
                                   );
                                 })}
-                              </div>
-                            </div>
+                    </div>
+                      </div>
                           )}
                         </div>
 
@@ -452,7 +452,7 @@ const Dashboard = () => {
                             View in Graph
                             <ArrowRight className="w-3 h-3" />
                           </Link>
-                        </div>
+                    </div>
                       </GlowCard>
                     </motion.div>
                   );
@@ -470,24 +470,24 @@ const Dashboard = () => {
                   </GlowCard>
                 ) : (
                   royaltySplits
-                    .filter(r => r.assetType === "character")
+                .filter(r => r.assetType === "character")
                     .map((royalty, index) => {
                       const creatorAmount = (royalty.totalRevenue * royalty.creatorPercentage) / 100;
                       return (
-                        <motion.div
-                          key={royalty.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
+                  <motion.div
+                    key={royalty.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
                           whileHover={{ y: -5 }}
-                        >
+                  >
                           <GlowCard glowColor="gold" className="hover-tilt">
                             <div className="flex items-start justify-between mb-4">
                               <div>
-                                <h3 className="text-xl font-bold mb-2">{royalty.assetName}</h3>
+                      <h3 className="text-xl font-bold mb-2">{royalty.assetName}</h3>
                                 <p className="text-sm text-muted-foreground">
-                                  Revenue: <span className="text-gold font-semibold">${royalty.totalRevenue.toFixed(2)}</span>
-                                </p>
+                        Revenue: <span className="text-gold font-semibold">${royalty.totalRevenue.toFixed(2)}</span>
+                      </p>
                               </div>
                               <Users className="w-8 h-8 text-gold opacity-50" />
                             </div>
@@ -510,17 +510,17 @@ const Dashboard = () => {
                                     <div className="flex items-center gap-4">
                                       <span className="text-primary font-semibold">{c.percentage}%</span>
                                       <span className="text-primary font-semibold">${contributorAmount.toFixed(2)}</span>
-                                    </div>
-                                  </div>
+                        </div>
+                          </div>
                                 );
                               })}
-                            </div>
-                          </GlowCard>
-                        </motion.div>
+                      </div>
+                    </GlowCard>
+                  </motion.div>
                       );
                     })
                 )}
-              </TabsContent>
+            </TabsContent>
 
               <TabsContent value="worlds" className="space-y-6">
                 {royaltySplits.filter(r => r.assetType === "world").length === 0 ? (
@@ -533,24 +533,24 @@ const Dashboard = () => {
                   </GlowCard>
                 ) : (
                   royaltySplits
-                    .filter(r => r.assetType === "world")
+                .filter(r => r.assetType === "world")
                     .map((royalty, index) => {
                       const creatorAmount = (royalty.totalRevenue * royalty.creatorPercentage) / 100;
                       return (
-                        <motion.div
-                          key={royalty.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
+                  <motion.div
+                    key={royalty.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
                           whileHover={{ y: -5 }}
-                        >
+                  >
                           <GlowCard glowColor="gold" className="hover-tilt">
                             <div className="flex items-start justify-between mb-4">
                               <div>
-                                <h3 className="text-xl font-bold mb-2">{royalty.assetName}</h3>
+                      <h3 className="text-xl font-bold mb-2">{royalty.assetName}</h3>
                                 <p className="text-sm text-muted-foreground">
-                                  Revenue: <span className="text-gold font-semibold">${royalty.totalRevenue.toFixed(2)}</span>
-                                </p>
+                        Revenue: <span className="text-gold font-semibold">${royalty.totalRevenue.toFixed(2)}</span>
+                      </p>
                               </div>
                               <Globe className="w-8 h-8 text-gold opacity-50" />
                             </div>
@@ -573,18 +573,18 @@ const Dashboard = () => {
                                     <div className="flex items-center gap-4">
                                       <span className="text-primary font-semibold">{c.percentage}%</span>
                                       <span className="text-primary font-semibold">${contributorAmount.toFixed(2)}</span>
-                                    </div>
-                                  </div>
+                        </div>
+                          </div>
                                 );
                               })}
-                            </div>
-                          </GlowCard>
-                        </motion.div>
+                      </div>
+                    </GlowCard>
+                  </motion.div>
                       );
                     })
                 )}
-              </TabsContent>
-            </Tabs>
+            </TabsContent>
+          </Tabs>
           )}
         </motion.div>
       </div>

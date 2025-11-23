@@ -36,20 +36,23 @@ const STATUS_MAP: Record<number, Contribution["status"]> = {
 
 /**
  * Get all contributions
+ * Note: This requires tracking contribution IDs or using an indexer
+ * For now, returns empty array - implement with events or indexer in production
  */
 export async function getAllContributions(): Promise<Contribution[]> {
-  const contract = getContractInstance("CONTRIBUTION_MANAGER", ContributionManagerABI);
-  
   try {
-    // Note: This is a simplified version. In production, you'd need to track contribution IDs
-    // or use events to get all contributions. For now, we'll need to know the max ID or use events.
-    // This is a placeholder that would need to be implemented based on your contract's design.
+    const contract = getContractInstance("CONTRIBUTION_MANAGER", ContributionManagerABI);
     
     // TODO: Implement proper fetching mechanism (events, indexer, etc.)
+    // For now, return empty array - contributions will be fetched by address or asset ID
     return [];
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message?.includes("not deployed")) {
+      console.warn("ContributionManager contract not deployed yet");
+      return [];
+    }
     console.error("Error fetching contributions:", error);
-    throw error;
+    return [];
   }
 }
 
@@ -57,21 +60,30 @@ export async function getAllContributions(): Promise<Contribution[]> {
  * Get contributions by contributor address
  */
 export async function getContributionsByAddress(address: string): Promise<Contribution[]> {
-  const contract = getContractInstance("CONTRIBUTION_MANAGER", ContributionManagerABI);
-  
   try {
+    const contract = getContractInstance("CONTRIBUTION_MANAGER", ContributionManagerABI);
+    
     const contributionIds = await contract.contributorContributions(address);
     const contributions: Contribution[] = [];
 
     for (const id of contributionIds) {
-      const data = await contract.contributions(id);
-      contributions.push(mapContributionData(data, id.toString()));
+      try {
+        const data = await contract.contributions(id);
+        contributions.push(mapContributionData(data, id.toString()));
+      } catch (err) {
+        // Skip invalid contribution IDs
+        continue;
+      }
     }
 
     return contributions;
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message?.includes("not deployed") || error?.code === "BAD_DATA") {
+      console.warn("ContributionManager contract not deployed yet or invalid");
+      return [];
+    }
     console.error("Error fetching contributions by address:", error);
-    throw error;
+    return [];
   }
 }
 
@@ -79,21 +91,29 @@ export async function getContributionsByAddress(address: string): Promise<Contri
  * Get contributions for a specific asset
  */
 export async function getContributionsByAsset(assetId: string): Promise<Contribution[]> {
-  const contract = getContractInstance("CONTRIBUTION_MANAGER", ContributionManagerABI);
-  
   try {
+    const contract = getContractInstance("CONTRIBUTION_MANAGER", ContributionManagerABI);
+    
     const contributionIds = await contract.assetContributions(assetId);
     const contributions: Contribution[] = [];
 
     for (const id of contributionIds) {
-      const data = await contract.contributions(id);
-      contributions.push(mapContributionData(data, id.toString()));
+      try {
+        const data = await contract.contributions(id);
+        contributions.push(mapContributionData(data, id.toString()));
+      } catch (err) {
+        continue;
+      }
     }
 
     return contributions;
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message?.includes("not deployed") || error?.code === "BAD_DATA") {
+      console.warn("ContributionManager contract not deployed yet or invalid");
+      return [];
+    }
     console.error("Error fetching contributions by asset:", error);
-    throw error;
+    return [];
   }
 }
 

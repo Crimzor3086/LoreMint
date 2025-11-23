@@ -24,34 +24,38 @@ export interface CharacterMetadata {
 export async function getUserCharacters(address: string): Promise<Character[]> {
   try {
     const contract = getContractInstance("CHARACTER_TOKEN", CharacterTokenABI);
-    const balance = await contract.balanceOf(address);
-    const characters: Character[] = [];
-
-    for (let i = 0; i < Number(balance); i++) {
-      const tokenId = await contract.tokenOfOwnerByIndex(address, i);
-      const metadata = await contract.characters(tokenId);
-      
-      characters.push({
-        id: tokenId.toString(),
-        name: metadata.name,
-        backstory: metadata.backstory,
-        abilities: metadata.abilities,
-        traits: metadata.traits,
-        creator: metadata.creator,
-        createdAt: new Date(Number(metadata.createdAt) * 1000),
-        mintedAsIP: true,
-      });
+    
+    // Try to get balance first to check if contract is valid
+    let balance: bigint;
+    try {
+      balance = await contract.balanceOf(address);
+    } catch (error: any) {
+      // Contract might not be deployed or address might be invalid
+      if (error?.message?.includes("not deployed") || error?.code === "BAD_DATA" || error?.message?.includes("could not decode")) {
+        console.warn("CharacterToken contract not deployed or invalid address");
+        return [];
+      }
+      throw error;
     }
 
-    return characters;
+    // If balance is 0, return empty array
+    if (balance === 0n) {
+      return [];
+    }
+
+    // The contract doesn't implement ERC721Enumerable, so we can't enumerate tokens
+    // For now, return empty array - in production, use an indexer or event logs
+    // TODO: Implement event-based indexing or use a subgraph/indexer
+    console.warn("CharacterToken doesn't support token enumeration. Use an indexer or event logs to track ownership.");
+    return [];
   } catch (error: any) {
     // If contract not deployed, return empty array
-    if (error?.message?.includes("not deployed")) {
-      console.warn("CharacterToken contract not deployed yet");
+    if (error?.message?.includes("not deployed") || error?.code === "BAD_DATA" || error?.message?.includes("could not decode")) {
+      console.warn("CharacterToken contract not deployed yet or invalid");
       return [];
     }
     console.error("Error fetching user characters:", error);
-    throw error;
+    return []; // Return empty array instead of throwing
   }
 }
 

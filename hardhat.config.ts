@@ -30,6 +30,12 @@ const config: HardhatUserConfig = {
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 1000000000, // 1 gwei
     },
+    mantleSepolia: {
+      url: process.env.MANTLE_SEPOLIA_RPC_URL || "https://rpc.sepolia.mantle.xyz",
+      chainId: 5003,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      gasPrice: 1000000000, // 1 gwei
+    },
     hardhat: {
       chainId: 1337,
     },
@@ -60,6 +66,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://explorer.testnet.mantle.xyz/api",
           browserURL: "https://explorer.testnet.mantle.xyz",
+        },
+      },
+      {
+        network: "mantleSepolia",
+        chainId: 5003,
+        urls: {
+          apiURL: "https://explorer.sepolia.mantle.xyz/api",
+          browserURL: "https://explorer.sepolia.mantle.xyz",
         },
       },
     ],
