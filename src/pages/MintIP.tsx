@@ -21,7 +21,7 @@ import {
   removeLocalWorld,
   removeLocalPlot,
 } from "@/lib/storage/localAssets";
-import { Coins, User, Globe, BookOpen, CheckCircle, Sparkles, Wallet, AlertCircle } from "lucide-react";
+import { Coins, User, Globe, BookOpen, CheckCircle, Sparkles, Wallet, AlertCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
@@ -64,6 +64,32 @@ const MintIP = () => {
     window.addEventListener("storage", refreshLocal);
     return () => window.removeEventListener("storage", refreshLocal);
   }, []);
+
+  const handleDelete = (type: "character" | "world" | "plot", id: string) => {
+    if (!id.startsWith("local_")) {
+      toast.error("Can only delete unminted assets");
+      return;
+    }
+
+    try {
+      if (type === "character") {
+        removeLocalCharacter(id);
+        setLocalCharacters(getLocalCharacters());
+        toast.success("Character deleted");
+      } else if (type === "world") {
+        removeLocalWorld(id);
+        setLocalWorlds(getLocalWorlds());
+        toast.success("World deleted");
+      } else if (type === "plot") {
+        removeLocalPlot(id);
+        setLocalPlots(getLocalPlots());
+        toast.success("Plot deleted");
+      }
+    } catch (error) {
+      console.error("Error deleting asset:", error);
+      toast.error("Failed to delete asset");
+    }
+  };
 
   const handleMint = async (type: "character" | "world" | "plot", id: string, metadata: { name: string; description: string; attributes?: any }) => {
     if (!wallet.isConnected) {
@@ -291,18 +317,30 @@ const MintIP = () => {
                               </Badge>
                             ))}
                           </div>
-                          <GradientButton
-                            variant="gold"
-                            onClick={() => handleMint("character", character.id, {
-                              name: character.name,
-                              description: character.backstory || "",
-                            })}
-                            disabled={isMinting || mintedAssets.has(character.id)}
-                            className="w-full md:w-auto"
-                          >
-                            <Coins className="w-4 h-4 mr-2 inline" />
-                            {isMinting ? "Minting..." : mintedAssets.has(character.id) ? "Minted" : "Mint as IP"}
-                          </GradientButton>
+                          <div className="flex gap-2">
+                            <GradientButton
+                              variant="gold"
+                              onClick={() => handleMint("character", character.id, {
+                                name: character.name,
+                                description: character.backstory || "",
+                              })}
+                              disabled={isMinting || mintedAssets.has(character.id)}
+                              className="flex-1 md:flex-none"
+                            >
+                              <Coins className="w-4 h-4 mr-2 inline" />
+                              {isMinting ? "Minting..." : mintedAssets.has(character.id) ? "Minted" : "Mint as IP"}
+                            </GradientButton>
+                            {character.id.startsWith("local_") && !mintedAssets.has(character.id) && (
+                              <GradientButton
+                                variant="cosmic"
+                                onClick={() => handleDelete("character", character.id)}
+                                disabled={isMinting}
+                                className="px-4"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </GradientButton>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </GlowCard>
@@ -376,18 +414,30 @@ const MintIP = () => {
                               </Badge>
                             )}
                           </div>
-                          <GradientButton
-                            variant="gold"
-                            onClick={() => handleMint("world", world.id, {
-                              name: world.name,
-                              description: world.description || `${world.geography}\n\n${world.culture}`,
-                            })}
-                            disabled={isMinting || mintedAssets.has(world.id)}
-                            className="w-full md:w-auto"
-                          >
-                            <Coins className="w-4 h-4 mr-2 inline" />
-                            {isMinting ? "Minting..." : mintedAssets.has(world.id) ? "Minted" : "Mint as IP"}
-                          </GradientButton>
+                          <div className="flex gap-2">
+                            <GradientButton
+                              variant="gold"
+                              onClick={() => handleMint("world", world.id, {
+                                name: world.name,
+                                description: world.description || `${world.geography}\n\n${world.culture}`,
+                              })}
+                              disabled={isMinting || mintedAssets.has(world.id)}
+                              className="flex-1 md:flex-none"
+                            >
+                              <Coins className="w-4 h-4 mr-2 inline" />
+                              {isMinting ? "Minting..." : mintedAssets.has(world.id) ? "Minted" : "Mint as IP"}
+                            </GradientButton>
+                            {world.id.startsWith("local_") && !mintedAssets.has(world.id) && (
+                              <GradientButton
+                                variant="emerald"
+                                onClick={() => handleDelete("world", world.id)}
+                                disabled={isMinting}
+                                className="px-4"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </GradientButton>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </GlowCard>
@@ -455,18 +505,30 @@ const MintIP = () => {
                           </Badge>
                         )}
                       </div>
-                      <GradientButton
-                        variant="gold"
-                        onClick={() => handleMint("plot", plot.id, {
-                          name: plot.title,
-                          description: plot.description || "",
-                        })}
-                        disabled={isMinting || mintedAssets.has(plot.id)}
-                        className="w-full md:w-auto"
-                      >
-                        <Coins className="w-4 h-4 mr-2 inline" />
-                        {isMinting ? "Minting..." : mintedAssets.has(plot.id) ? "Minted" : "Mint as IP"}
-                      </GradientButton>
+                          <div className="flex gap-2">
+                            <GradientButton
+                              variant="gold"
+                              onClick={() => handleMint("plot", plot.id, {
+                                name: plot.title,
+                                description: plot.description || "",
+                              })}
+                              disabled={isMinting || mintedAssets.has(plot.id)}
+                              className="flex-1 md:flex-none"
+                            >
+                              <Coins className="w-4 h-4 mr-2 inline" />
+                              {isMinting ? "Minting..." : mintedAssets.has(plot.id) ? "Minted" : "Mint as IP"}
+                            </GradientButton>
+                            {plot.id.startsWith("local_") && !mintedAssets.has(plot.id) && (
+                              <GradientButton
+                                variant="cosmic"
+                                onClick={() => handleDelete("plot", plot.id)}
+                                disabled={isMinting}
+                                className="px-4"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </GradientButton>
+                            )}
+                          </div>
                     </GlowCard>
                   </motion.div>
                 ))
