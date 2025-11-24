@@ -46,8 +46,24 @@ export const MANTLE_TESTNET: MantleConfig = {
   blockExplorerUrl: "https://explorer.testnet.mantle.xyz",
 };
 
-// Use mainnet by default
-export const MANTLE_CONFIG = MANTLE_MAINNET;
+// Mantle Sepolia Testnet Configuration
+export const MANTLE_SEPOLIA: MantleConfig = {
+  rpcUrl: import.meta.env.VITE_MANTLE_SEPOLIA_RPC_URL || 
+    (import.meta.env.VITE_ALCHEMY_API_KEY 
+      ? `https://mantle-sepolia.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_API_KEY}`
+      : "https://rpc.sepolia.mantle.xyz"),
+  chainId: 5003, // Mantle Sepolia
+  networkName: "Mantle Sepolia",
+  nativeCurrency: {
+    name: "Mantle",
+    symbol: "MNT",
+    decimals: 18,
+  },
+  blockExplorerUrl: "https://explorer.sepolia.mantle.xyz",
+};
+
+// Use Mantle Sepolia testnet by default for development
+export const MANTLE_CONFIG = MANTLE_SEPOLIA;
 
 /**
  * Get provider for Mantle network
