@@ -33,6 +33,7 @@ const MintIP = () => {
   const { plots: onChainPlots, isLoading: isLoadingPlots, fetchPlots } = usePlots();
   const [royaltyPercentage, setRoyaltyPercentage] = useState("10");
   const [mintedAssets, setMintedAssets] = useState<Set<string>>(new Set());
+  const [mintingAssetId, setMintingAssetId] = useState<string | null>(null);
   
   // Load local assets
   const [localCharacters, setLocalCharacters] = useState(getLocalCharacters());
@@ -96,6 +97,21 @@ const MintIP = () => {
       toast.error("Please connect your wallet first");
       return;
     }
+
+    // Prevent duplicate minting calls
+    if (isMinting || mintingAssetId !== null) {
+      toast.warning("A minting transaction is already in progress. Please wait.");
+      return;
+    }
+
+    // Check if already minted
+    if (mintedAssets.has(id)) {
+      toast.warning("This asset has already been minted.");
+      return;
+    }
+
+    // Set the asset being minted to prevent duplicate calls
+    setMintingAssetId(id);
 
     try {
       // Prepare attributes based on type
@@ -161,7 +177,15 @@ const MintIP = () => {
       }
     } catch (err) {
       console.error("Minting error:", err);
-      toast.error(error || "Failed to mint asset");
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      if (errorMessage.includes("user rejected") || errorMessage.includes("User denied") || errorMessage.includes("rejected")) {
+        toast.error("Transaction rejected by user");
+      } else {
+        toast.error(error || "Failed to mint asset");
+      }
+    } finally {
+      // Always clear the minting state
+      setMintingAssetId(null);
     }
   };
 
@@ -324,7 +348,7 @@ const MintIP = () => {
                                 name: character.name,
                                 description: character.backstory || "",
                               })}
-                              disabled={isMinting || mintedAssets.has(character.id)}
+                              disabled={isMinting || mintedAssets.has(character.id) || mintingAssetId === character.id || mintingAssetId !== null}
                               className="flex-1 md:flex-none"
                             >
                               <Coins className="w-4 h-4 mr-2 inline" />
@@ -334,7 +358,7 @@ const MintIP = () => {
                               <GradientButton
                                 variant="cosmic"
                                 onClick={() => handleDelete("character", character.id)}
-                                disabled={isMinting}
+                                disabled={isMinting || mintingAssetId !== null}
                                 className="px-4"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -421,7 +445,7 @@ const MintIP = () => {
                                 name: world.name,
                                 description: world.description || `${world.geography}\n\n${world.culture}`,
                               })}
-                              disabled={isMinting || mintedAssets.has(world.id)}
+                              disabled={isMinting || mintedAssets.has(world.id) || mintingAssetId === world.id || mintingAssetId !== null}
                               className="flex-1 md:flex-none"
                             >
                               <Coins className="w-4 h-4 mr-2 inline" />
@@ -431,7 +455,7 @@ const MintIP = () => {
                               <GradientButton
                                 variant="emerald"
                                 onClick={() => handleDelete("world", world.id)}
-                                disabled={isMinting}
+                                disabled={isMinting || mintingAssetId !== null}
                                 className="px-4"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -512,7 +536,7 @@ const MintIP = () => {
                                 name: plot.title,
                                 description: plot.description || "",
                               })}
-                              disabled={isMinting || mintedAssets.has(plot.id)}
+                              disabled={isMinting || mintedAssets.has(plot.id) || mintingAssetId === plot.id || mintingAssetId !== null}
                               className="flex-1 md:flex-none"
                             >
                               <Coins className="w-4 h-4 mr-2 inline" />
@@ -522,7 +546,7 @@ const MintIP = () => {
                               <GradientButton
                                 variant="cosmic"
                                 onClick={() => handleDelete("plot", plot.id)}
-                                disabled={isMinting}
+                                disabled={isMinting || mintingAssetId !== null}
                                 className="px-4"
                               >
                                 <Trash2 className="w-4 h-4" />

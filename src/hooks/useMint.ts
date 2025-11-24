@@ -33,6 +33,12 @@ export function useMint() {
       return null;
     }
 
+    // Prevent duplicate calls
+    if (isMinting) {
+      console.warn("Minting already in progress, ignoring duplicate call");
+      return null;
+    }
+
     setIsMinting(true);
     setError(null);
 
