@@ -3,6 +3,7 @@ import { useWalletContext } from "@/context/WalletContext";
 import { mintCharacter } from "@/lib/blockchain/services/characterService";
 import { mintWorld } from "@/lib/blockchain/services/worldService";
 import { mintPlot } from "@/lib/blockchain/services/plotService";
+import { submitContribution } from "@/lib/blockchain/services/contributionService";
 import { CONTRACTS } from "@/lib/blockchain/contracts";
 import { ethers } from "ethers";
 
@@ -79,6 +80,33 @@ export function useMint() {
         }
         default:
           throw new Error(`Unknown mint type: ${type}`);
+      }
+
+      // Automatically create a contribution for the minted asset
+      try {
+        // Map mint type to contribution type
+        const contributionTypeMap: Record<MintType, "character" | "story" | "artwork" | "expansion"> = {
+          character: "character",
+          world: "expansion",
+          plot: "story",
+        };
+        
+        const contributionType = contributionTypeMap[type];
+        const contributionTitle = `${metadata.name} - Initial Mint`;
+        const contributionDescription = `This ${type} was minted as an IP token. ${metadata.description}`;
+        
+        await submitContribution(
+          signer,
+          contributionType,
+          contributionTitle,
+          contributionDescription,
+          result.tokenId
+        );
+        
+        console.log(`Contribution created for minted ${type} with token ID ${result.tokenId}`);
+      } catch (contributionError) {
+        // Log but don't fail the mint if contribution creation fails
+        console.warn("Failed to create contribution for minted asset:", contributionError);
       }
 
       return {
