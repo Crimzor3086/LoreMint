@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sparkles, User, X, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { AIService } from "@/lib/ai";
+import { saveLocalCharacter } from "@/lib/storage/localAssets";
 
 const CharacterBuilder = () => {
   const [name, setName] = useState("");
@@ -106,8 +107,25 @@ const CharacterBuilder = () => {
     toast.success("All fields cleared!");
   };
 
-  const handleMint = () => {
-    toast.success("Character prepared for minting!");
+  const handleSave = () => {
+    if (!name) {
+      toast.error("Please enter a character name");
+      return;
+    }
+
+    try {
+      const character = saveLocalCharacter({
+        name,
+        backstory,
+        abilities,
+        traits,
+        creator: "", // Will be set when minted
+      });
+      toast.success("Character saved! You can mint it from the Mint IP page.");
+    } catch (error) {
+      console.error("Error saving character:", error);
+      toast.error("Failed to save character");
+    }
   };
 
   return (
@@ -326,11 +344,11 @@ const CharacterBuilder = () => {
               </GradientButton>
               <GradientButton
                 variant="gold"
-                onClick={handleMint}
-                disabled={!name || !generatedLore}
+                onClick={handleSave}
+                disabled={!name}
                 className="w-full"
               >
-                Mint as IP
+                Save Character
               </GradientButton>
               <GradientButton
                 variant="magic"

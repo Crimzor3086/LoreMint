@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
@@ -13,6 +13,14 @@ import { useMint } from "@/hooks/useMint";
 import { useCharacters } from "@/hooks/useCharacters";
 import { useWorlds } from "@/hooks/useWorlds";
 import { usePlots } from "@/hooks/usePlots";
+import { 
+  getLocalCharacters, 
+  getLocalWorlds, 
+  getLocalPlots,
+  removeLocalCharacter,
+  removeLocalWorld,
+  removeLocalPlot,
+} from "@/lib/storage/localAssets";
 import { Coins, User, Globe, BookOpen, CheckCircle, Sparkles, Wallet, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -20,18 +28,42 @@ import { Link } from "react-router-dom";
 const MintIP = () => {
   const { wallet } = useWalletContext();
   const { mint, isMinting, error } = useMint();
-  const { characters: allCharacters, fetchCharacters } = useCharacters();
-  const { worlds: allWorlds, fetchWorlds } = useWorlds();
-  const { plots: allPlots, fetchPlots } = usePlots();
+  const { characters: onChainCharacters, isLoading: isLoadingCharacters, fetchCharacters } = useCharacters();
+  const { worlds: onChainWorlds, isLoading: isLoadingWorlds, fetchWorlds } = useWorlds();
+  const { plots: onChainPlots, isLoading: isLoadingPlots, fetchPlots } = usePlots();
   const [royaltyPercentage, setRoyaltyPercentage] = useState("10");
   const [mintedAssets, setMintedAssets] = useState<Set<string>>(new Set());
+  
+  // Load local assets
+  const [localCharacters, setLocalCharacters] = useState(getLocalCharacters());
+  const [localWorlds, setLocalWorlds] = useState(getLocalWorlds());
+  const [localPlots, setLocalPlots] = useState(getLocalPlots());
 
-  // Filter out already minted assets (those with mintedAsIP = true or status = "minted")
+  // Combine local and on-chain assets
+  const allCharacters = [...localCharacters, ...onChainCharacters.filter(c => !c.mintedAsIP)];
+  const allWorlds = [...localWorlds, ...onChainWorlds.filter(w => !w.mintedAsIP)];
+  const allPlots = [...localPlots, ...onChainPlots.filter(p => p.status !== "minted")];
+
+  // Filter out already minted assets
   const characters = allCharacters.filter(c => !c.mintedAsIP && !mintedAssets.has(c.id));
   const worlds = allWorlds.filter(w => !w.mintedAsIP && !mintedAssets.has(w.id));
   const plotArcs = allPlots.filter(p => p.status !== "minted" && !mintedAssets.has(p.id));
   
-  const isLoading = false; // Hooks handle loading state
+  const isLoading = isLoadingCharacters || isLoadingWorlds || isLoadingPlots;
+
+  // Refresh local assets when component mounts or when storage changes
+  useEffect(() => {
+    const refreshLocal = () => {
+      setLocalCharacters(getLocalCharacters());
+      setLocalWorlds(getLocalWorlds());
+      setLocalPlots(getLocalPlots());
+    };
+    
+    refreshLocal();
+    // Listen for storage changes (from other tabs/windows)
+    window.addEventListener("storage", refreshLocal);
+    return () => window.removeEventListener("storage", refreshLocal);
+  }, []);
 
   const handleMint = async (type: "character" | "world" | "plot", id: string, metadata: { name: string; description: string; attributes?: any }) => {
     if (!wallet.isConnected) {
@@ -40,18 +72,59 @@ const MintIP = () => {
     }
 
     try {
+      // Prepare attributes based on type
+      let attributes: any = {
+        royaltyPercentage: parseFloat(royaltyPercentage),
+      };
+
+      if (type === "character") {
+        const character = allCharacters.find(c => c.id === id);
+        attributes = {
+          ...attributes,
+          abilities: character?.abilities || [],
+          traits: character?.traits || [],
+        };
+      } else if (type === "world") {
+        const world = allWorlds.find(w => w.id === id);
+        // Use the world's direct fields instead of parsing description
+        attributes = {
+          ...attributes,
+          geography: world?.geography || "",
+          culture: world?.culture || "",
+          era: world?.era || "",
+        };
+      } else if (type === "plot") {
+        const plot = allPlots.find(p => p.id === id);
+        attributes = {
+          ...attributes,
+          characterIds: plot?.characters || [],
+          worldId: plot?.worldId || "0",
+        };
+      }
+
       const result = await mint(type, {
         name: metadata.name,
         description: metadata.description,
-        attributes: {
-          ...metadata.attributes,
-          royaltyPercentage: parseFloat(royaltyPercentage),
-        },
+        attributes,
       });
 
       if (result) {
         toast.success(`${type} minted successfully as IP token!`);
         setMintedAssets((prev) => new Set([...prev, id]));
+        
+        // Remove from local storage if it was a local asset
+        if (id.startsWith("local_")) {
+          if (type === "character") {
+            removeLocalCharacter(id);
+            setLocalCharacters(getLocalCharacters());
+          } else if (type === "world") {
+            removeLocalWorld(id);
+            setLocalWorlds(getLocalWorlds());
+          } else if (type === "plot") {
+            removeLocalPlot(id);
+            setLocalPlots(getLocalPlots());
+          }
+        }
         
         // Refresh asset lists from blockchain
         await Promise.all([
@@ -307,7 +380,7 @@ const MintIP = () => {
                             variant="gold"
                             onClick={() => handleMint("world", world.id, {
                               name: world.name,
-                              description: world.description || "",
+                              description: world.description || `${world.geography}\n\n${world.culture}`,
                             })}
                             disabled={isMinting || mintedAssets.has(world.id)}
                             className="w-full md:w-auto"

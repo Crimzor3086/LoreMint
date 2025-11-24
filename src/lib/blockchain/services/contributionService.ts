@@ -5,6 +5,7 @@
 
 import { ethers } from "ethers";
 import { getContractInstance } from "../contracts";
+import { getMantleProvider } from "../mantle";
 import ContributionManagerABI from "../abis/ContributionManager.json";
 import { Contribution } from "@/types";
 
@@ -35,17 +36,61 @@ const STATUS_MAP: Record<number, Contribution["status"]> = {
 };
 
 /**
- * Get all contributions
- * Note: This requires tracking contribution IDs or using an indexer
- * For now, returns empty array - implement with events or indexer in production
+ * Get all contributions by querying events
  */
 export async function getAllContributions(): Promise<Contribution[]> {
   try {
     const contract = getContractInstance("CONTRIBUTION_MANAGER", ContributionManagerABI);
+    const provider = getMantleProvider();
     
-    // TODO: Implement proper fetching mechanism (events, indexer, etc.)
-    // For now, return empty array - contributions will be fetched by address or asset ID
-    return [];
+    if (!provider) {
+      console.warn("No provider available");
+      return [];
+    }
+
+    // Query ContributionSubmitted events to get all contribution IDs
+    const filter = contract.filters.ContributionSubmitted();
+    const currentBlock = await provider.getBlockNumber();
+    const fromBlock = Math.max(0, currentBlock - 10000); // Last 10k blocks (adjust as needed)
+    
+    try {
+      const events = await contract.queryFilter(filter, fromBlock, currentBlock);
+      const contributionIds = new Set<string>();
+      
+      // Extract unique contribution IDs from events
+      // The first indexed parameter (contributionId) is in topics[1]
+      events.forEach((event) => {
+        if (event.topics && event.topics[1]) {
+          // topics[0] is the event signature, topics[1] is the first indexed param
+          const contributionId = BigInt(event.topics[1]).toString();
+          contributionIds.add(contributionId);
+        } else if (event.args && event.args[0] !== undefined) {
+          // Fallback to args if topics not available
+          contributionIds.add(event.args[0].toString());
+        }
+      });
+
+      // Fetch each contribution's data
+      const contributions: Contribution[] = [];
+      for (const id of contributionIds) {
+        try {
+          const data = await contract.contributions(id);
+          contributions.push(mapContributionData(data, id));
+        } catch (err) {
+          // Skip invalid contribution IDs
+          console.warn(`Failed to fetch contribution ${id}:`, err);
+          continue;
+        }
+      }
+
+      // Sort by creation date (newest first)
+      contributions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      
+      return contributions;
+    } catch (eventError) {
+      console.warn("Error querying events, falling back to empty array:", eventError);
+      return [];
+    }
   } catch (error: any) {
     if (error?.message?.includes("not deployed")) {
       console.warn("ContributionManager contract not deployed yet");
@@ -146,11 +191,19 @@ export async function submitContribution(
     const receipt = await tx.wait();
 
     // Extract contribution ID from event
+    const eventSignature = ethers.id("ContributionSubmitted(uint256,address,uint256)");
     const event = receipt.logs.find(
-      (log: any) => log.topics[0] === ethers.id("ContributionSubmitted(uint256,address,uint256)")
+      (log: any) => log.topics && log.topics[0] === eventSignature
     );
     
-    const contributionId = event ? ethers.toNumber(event.topics[1]) : "0";
+    let contributionId = "0";
+    if (event && event.topics && event.topics[1]) {
+      // topics[1] contains the contributionId (first indexed parameter)
+      contributionId = BigInt(event.topics[1]).toString();
+    } else if (event && event.args && event.args[0] !== undefined) {
+      // Fallback to args
+      contributionId = event.args[0].toString();
+    }
 
     return {
       contributionId: contributionId.toString(),

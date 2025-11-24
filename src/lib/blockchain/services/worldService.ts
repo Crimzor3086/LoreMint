@@ -125,11 +125,19 @@ export async function mintWorld(
     const receipt = await tx.wait();
 
     // Extract token ID from event
+    const eventSignature = ethers.id("WorldMinted(uint256,address,string)");
     const event = receipt.logs.find(
-      (log: any) => log.topics[0] === ethers.id("WorldMinted(uint256,address,string)")
+      (log: any) => log.topics && log.topics[0] === eventSignature
     );
     
-    const tokenId = event ? ethers.toNumber(event.topics[1]) : "0";
+    let tokenId = "0";
+    if (event && event.topics && event.topics[1]) {
+      // topics[1] contains the tokenId (first indexed parameter)
+      tokenId = BigInt(event.topics[1]).toString();
+    } else if (event && event.args && event.args[0] !== undefined) {
+      // Fallback to args
+      tokenId = event.args[0].toString();
+    }
 
     return {
       tokenId: tokenId.toString(),

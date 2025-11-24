@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Globe, Sparkles, X, MapPin, Users, Clock, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { AIService } from "@/lib/ai";
+import { saveLocalWorld } from "@/lib/storage/localAssets";
 
 const WorldBuilder = () => {
   const [name, setName] = useState("");
@@ -76,12 +77,26 @@ const WorldBuilder = () => {
     toast.success("All fields cleared!");
   };
 
-  const handleMint = () => {
+  const handleSave = () => {
     if (!name || !geography || !culture) {
       toast.error("Please fill in all required fields");
       return;
     }
-    toast.success("World prepared for minting!");
+
+    try {
+      const world = saveLocalWorld({
+        name,
+        era: era || "",
+        geography,
+        culture,
+        description: history || `${geography}\n\n${culture}`,
+        creator: "", // Will be set when minted
+      });
+      toast.success("World saved! You can mint it from the Mint IP page.");
+    } catch (error) {
+      console.error("Error saving world:", error);
+      toast.error("Failed to save world");
+    }
   };
 
   return (
@@ -315,11 +330,11 @@ const WorldBuilder = () => {
               </GradientButton>
               <GradientButton
                 variant="gold"
-                onClick={handleMint}
+                onClick={handleSave}
                 disabled={!name || !geography || !culture}
                 className="w-full"
               >
-                Mint as IP
+                Save World
               </GradientButton>
               <GradientButton
                 variant="magic"
