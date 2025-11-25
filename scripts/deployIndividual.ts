@@ -1,10 +1,10 @@
 /**
  * Deploy Individual Contract Script
- * 
- * Deploy contracts one at a time to Mantle Sepolia
- * 
+ *
+ * Deploy contracts one at a time to the Story Aeneid testnet
+ *
  * Usage:
- *   npx hardhat run scripts/deployIndividual.ts --network mantleSepolia
+ *   npx hardhat run scripts/deployIndividual.ts --network storyAeneid
  */
 
 import hre from "hardhat";
@@ -23,7 +23,7 @@ async function main() {
   
   console.log("Deploying contract with the account:", deployer.address);
   console.log("Network:", hre.network.name, "Chain ID:", network.chainId.toString());
-  console.log("Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "MNT\n");
+  console.log("Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "IP\n");
 
   const contractName = process.env.CONTRACT_NAME || "CharacterToken";
   const baseURI = process.env.BASE_URI || "https://api.loremint.com/metadata/";

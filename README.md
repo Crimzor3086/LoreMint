@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-LoreMint is a decentralized platform that empowers creators to mint, expand, and monetize entire story universes as programmable IP assets on the Mantle blockchain. Leveraging AI, creators can generate characters, lore, timelines, and world-building elements while retaining full ownership and attribution.
+LoreMint is a decentralized platform that empowers creators to mint, expand, and monetize entire story universes as programmable IP assets on the Story Aeneid network. Leveraging AI, creators can generate characters, lore, timelines, and world-building elements while retaining full ownership and attribution.
 
 ## Project Structure
 
@@ -55,9 +55,14 @@ The application will be available at `http://localhost:8080`
 Create a `.env` file in the root directory with the following variables:
 
 ```env
-# Alchemy API Configuration
-VITE_ALCHEMY_API_KEY=your_alchemy_api_key_here
-VITE_MANTLE_RPC_URL=https://mantle-mainnet.g.alchemy.com/v2/YOUR_API_KEY
+# Network Configuration
+VITE_STORY_AENEID_RPC_URL=https://aeneid.storyrpc.io
+VITE_STORY_AENEID_CHAIN_ID=1315
+VITE_STORY_AENEID_NETWORK_NAME="Story Aeneid Testnet"
+VITE_STORY_AENEID_NATIVE_NAME="Imagination Protocol"
+VITE_STORY_AENEID_NATIVE_SYMBOL=IP
+VITE_STORY_AENEID_NATIVE_DECIMALS=18
+VITE_STORY_AENEID_BLOCK_EXPLORER=https://aeneid.storyscan.xyz
 
 # Contract Addresses (update after deployment)
 VITE_CHARACTER_TOKEN_ADDRESS=0x0000000000000000000000000000000000000000

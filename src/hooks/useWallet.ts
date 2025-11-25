@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import { switchToMantle, getBalance, MANTLE_CONFIG } from "@/lib/blockchain/mantle";
+import { switchToNetwork, getBalance, NETWORK_CONFIG } from "@/lib/blockchain/network";
 
 export interface WalletState {
   address: string | null;
@@ -95,9 +95,9 @@ export function useWallet() {
       const network = await provider.getNetwork();
       const chainId = Number(network.chainId);
 
-      // Switch to Mantle if not already on it
-      if (chainId !== MANTLE_CONFIG.chainId) {
-        await switchToMantle();
+      // Switch to the expected network if not already on it
+      if (chainId !== NETWORK_CONFIG.chainId) {
+        await switchToNetwork();
         // Reload to get updated network
         window.location.reload();
         return;

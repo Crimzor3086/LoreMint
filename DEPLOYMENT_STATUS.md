@@ -1,77 +1,45 @@
-# Deployment Status - Mantle Sepolia Testnet
+# Deployment Status - Story Aeneid Testnet
 
-## Deployed Contracts
+## Current State
 
-### ✅ CharacterToken
-- **Address**: `0x72a214F0Ddf9a9b96Fa1F19f35e019f41fC42f95`
-- **Status**: ✅ Deployed Successfully
-- **Explorer**: https://explorer.sepolia.mantle.xyz/address/0x72a214F0Ddf9a9b96Fa1F19f35e019f41fC42f95
-
-### ⏳ Pending Deployment
-
-The following contracts need to be deployed. Your account currently has **2.11 MNT** which may not be sufficient for all deployments.
-
-#### WorldToken
-- **Estimated Gas**: ~5.15 MNT
-- **Status**: ⏳ Pending (insufficient funds)
-
-#### PlotToken
-- **Status**: ⏳ Pending
-
-#### ContributionManager
-- **Status**: ⏳ Pending
+Contracts must be redeployed to the Story Aeneid testnet. No Story-native deployments have been recorded yet.
 
 ## Next Steps
 
-### Option 1: Get More Testnet MNT
-1. Visit Mantle Sepolia Faucet: https://faucet.sepolia.mantle.xyz
-2. Request more testnet MNT tokens
-3. Continue deployment with:
-   ```bash
-   npm run deploy:mantle-sepolia
-   ```
-
-### Option 2: Deploy Contracts Individually
-Deploy each contract one at a time to monitor gas usage:
-
+### Option 1: Deploy Full Suite
 ```bash
-# Deploy WorldToken
-CONTRACT_NAME=WorldToken npx hardhat run scripts/deployIndividual.ts --network mantleSepolia
+npm run deploy:story
+```
 
-# Deploy PlotToken
-CONTRACT_NAME=PlotToken npx hardhat run scripts/deployIndividual.ts --network mantleSepolia
-
-# Deploy ContributionManager
-CONTRACT_NAME=ContributionManager npx hardhat run scripts/deployIndividual.ts --network mantleSepolia
+### Option 2: Deploy Individually
+```bash
+# Deploy CharacterToken / WorldToken / etc.
+CONTRACT_NAME=WorldToken npx hardhat run scripts/deployIndividual.ts --network storyAeneid
 ```
 
 ## Update Frontend Environment
 
-After all contracts are deployed, update your `.env` file:
+Once contracts are deployed, update your `.env` file:
 
 ```env
-VITE_CHARACTER_TOKEN_ADDRESS=0x72a214F0Ddf9a9b96Fa1F19f35e019f41fC42f95
-VITE_WORLD_TOKEN_ADDRESS=<deployed_address>
-VITE_PLOT_TOKEN_ADDRESS=<deployed_address>
-VITE_CONTRIBUTION_MANAGER_ADDRESS=<deployed_address>
+VITE_CHARACTER_TOKEN_ADDRESS=<character_address>
+VITE_WORLD_TOKEN_ADDRESS=<world_address>
+VITE_PLOT_TOKEN_ADDRESS=<plot_address>
+VITE_CONTRIBUTION_MANAGER_ADDRESS=<contribution_manager_address>
 ```
 
 ## Account Information
 
 - **Deployer Address**: `0x7c538b83D0295f94C4bBAf8302095d9ED4b2Ad5f`
-- **Network**: Mantle Sepolia Testnet (Chain ID: 5003)
-- **Current Balance**: ~2.11 MNT
-- **RPC URL**: https://rpc.sepolia.mantle.xyz
+- **Network**: Story Aeneid Testnet (Chain ID: 1315)
+- **RPC URL**: https://aeneid.storyrpc.io
+- **Explorer**: https://aeneid.storyscan.xyz
+
+Ensure the deployer wallet holds sufficient IP (Story's native token) before running the scripts.
 
 ## Verification
 
-To verify contracts on the explorer (optional):
 ```bash
-npx hardhat verify --network mantleSepolia <CONTRACT_ADDRESS> <CONSTRUCTOR_ARGS>
-```
-
-Example for CharacterToken:
-```bash
-npx hardhat verify --network mantleSepolia 0x72a214F0Ddf9a9b96Fa1F19f35e019f41fC42f95 "https://api.loremint.com/metadata/character/"
+npx hardhat verify --network storyAeneid <CONTRACT_ADDRESS> <CONSTRUCTOR_ARGS>
 ```
 

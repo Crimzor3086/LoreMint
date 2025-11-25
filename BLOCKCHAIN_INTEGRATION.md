@@ -2,7 +2,7 @@
 
 ## Overview
 
-LoreMint is now fully integrated with the Mantle blockchain. All data fetching and interactions are handled through blockchain services and React hooks.
+LoreMint is now fully integrated with the Story Aeneid network. All data fetching and interactions are handled through blockchain services and React hooks.
 
 ## Architecture
 
@@ -32,7 +32,7 @@ Located in `src/hooks/`:
 ## Setup
 
 ### 1. Deploy Contracts
-Deploy the smart contracts to Mantle network:
+Deploy the smart contracts to the Story Aeneid testnet:
 - CharacterToken
 - WorldToken
 - PlotToken
@@ -49,8 +49,8 @@ VITE_CONTRIBUTION_MANAGER_ADDRESS=0x...
 
 ### 3. Connect Wallet
 Users must connect their MetaMask wallet. The app will:
-- Automatically switch to Mantle network if needed
-- Add Mantle network to MetaMask if not present
+- Automatically switch to Story Aeneid if needed
+- Add Story Aeneid to MetaMask if not present
 - Fetch user's assets from blockchain
 
 ## Usage
@@ -99,7 +99,7 @@ All services handle:
 
 ## Next Steps
 
-1. **Deploy Contracts**: Deploy all contracts to Mantle mainnet/testnet
+1. **Deploy Contracts**: Deploy all contracts to the Story Aeneid testnet
 2. **Update Addresses**: Add deployed contract addresses to `.env`
 3. **Test Integration**: Test all operations with deployed contracts
 4. **Add Indexer**: Consider adding a blockchain indexer for better performance

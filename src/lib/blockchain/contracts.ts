@@ -1,10 +1,10 @@
 /**
  * Contract ABI imports & helpers
- * Handles Mantle smart contract interactions
+ * Handles Story Aeneid smart contract interactions
  */
 
 import { ethers } from "ethers";
-import { getMantleProvider, MANTLE_CONFIG } from "./mantle";
+import { getNetworkProvider, NETWORK_CONFIG } from "./network";
 
 export interface ContractConfig {
   address: string;
@@ -16,19 +16,19 @@ export interface ContractConfig {
 export const CONTRACTS = {
   CHARACTER_TOKEN: {
     address: import.meta.env.VITE_CHARACTER_TOKEN_ADDRESS || "0x0000000000000000000000000000000000000000",
-    chainId: MANTLE_CONFIG.chainId,
+    chainId: NETWORK_CONFIG.chainId,
   },
   WORLD_TOKEN: {
     address: import.meta.env.VITE_WORLD_TOKEN_ADDRESS || "0x0000000000000000000000000000000000000000",
-    chainId: MANTLE_CONFIG.chainId,
+    chainId: NETWORK_CONFIG.chainId,
   },
   PLOT_TOKEN: {
     address: import.meta.env.VITE_PLOT_TOKEN_ADDRESS || "0x0000000000000000000000000000000000000000",
-    chainId: MANTLE_CONFIG.chainId,
+    chainId: NETWORK_CONFIG.chainId,
   },
   CONTRIBUTION_MANAGER: {
     address: import.meta.env.VITE_CONTRIBUTION_MANAGER_ADDRESS || "0x0000000000000000000000000000000000000000",
-    chainId: MANTLE_CONFIG.chainId,
+    chainId: NETWORK_CONFIG.chainId,
   },
 } as const;
 
@@ -53,7 +53,7 @@ export function getContractInstance(
     throw new Error(`Contract ${contractName} is not deployed. Please set the contract address in .env`);
   }
   
-  const provider = signerOrProvider || getMantleProvider();
+  const provider = signerOrProvider || getNetworkProvider();
   return new ethers.Contract(contract.address, abi, provider);
 }
 
@@ -99,6 +99,6 @@ export async function writeContract(
  * Wait for transaction confirmation
  */
 export async function waitForTransaction(txHash: string): Promise<ethers.TransactionReceipt> {
-  const provider = getMantleProvider();
+  const provider = getNetworkProvider();
   return await provider.waitForTransaction(txHash);
 }

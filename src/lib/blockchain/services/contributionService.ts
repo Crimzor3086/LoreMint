@@ -5,7 +5,7 @@
 
 import { ethers } from "ethers";
 import { getContractInstance } from "../contracts";
-import { getMantleProvider } from "../mantle";
+import { getNetworkProvider } from "../network";
 import ContributionManagerABI from "../abis/ContributionManager.json";
 import { Contribution } from "@/types";
 
@@ -41,7 +41,7 @@ const STATUS_MAP: Record<number, Contribution["status"]> = {
 export async function getAllContributions(): Promise<Contribution[]> {
   try {
     const contract = getContractInstance("CONTRIBUTION_MANAGER", ContributionManagerABI);
-    const provider = getMantleProvider();
+    const provider = getNetworkProvider();
     
     if (!provider) {
       console.warn("No provider available");

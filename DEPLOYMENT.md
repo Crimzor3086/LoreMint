@@ -3,7 +3,7 @@
 ## Prerequisites
 
 1. **Node.js** (v18 or higher)
-2. **MetaMask** or another wallet with MNT for gas fees
+2. **MetaMask** or another wallet with IP for gas fees
 3. **Private Key** of the deployment wallet (keep this secure!)
 
 ## Setup
@@ -30,39 +30,29 @@ Edit `.env` and add your values:
 # Your private key (NEVER commit this!)
 PRIVATE_KEY=your_private_key_here
 
-# Network RPC URLs
-MANTLE_RPC_URL=https://rpc.mantle.xyz
-MANTLE_TESTNET_RPC_URL=https://rpc.testnet.mantle.xyz
-
-# Optional: Alchemy API for better performance
-ALCHEMY_API_KEY=lcF6DkZJO7XkvTzCM4U97
+# Network RPC URL
+STORY_AENEID_RPC_URL=https://aeneid.storyrpc.io
 
 # Base URI for metadata
 BASE_URI=https://api.loremint.com/metadata/
 
 # Optional: Explorer API key for contract verification
-MANTLE_EXPLORER_API_KEY=
+STORY_AENEID_EXPLORER_API_KEY=
 ```
 
-### 3. Get Testnet MNT (for testing)
+### 3. Get Testnet IP (for testing)
 
-For Mantle Testnet:
-- Visit: https://faucet.testnet.mantle.xyz
-- Request testnet MNT tokens
+- Visit the official Story faucet (https://faucet.story.foundation/) and request Story Aeneid testnet funds
 
 ## Deployment
 
-### Deploy to Mantle Testnet (Recommended First)
+### Deploy to Story Aeneid Testnet
 
 ```bash
-npx hardhat run scripts/deployMantle.ts --network mantleTestnet
+npx hardhat run scripts/deployStory.ts --network storyAeneid
 ```
 
-### Deploy to Mantle Mainnet
-
-```bash
-npx hardhat run scripts/deployMantle.ts --network mantle
-```
+> Mainnet is not yet configured. Update `hardhat.config.cjs` once Story mainnet values are available.
 
 ## What Gets Deployed
 
@@ -93,7 +83,7 @@ The deployment script will output these addresses automatically.
 If you have an explorer API key, contracts will be automatically verified. Otherwise, you can verify manually:
 
 ```bash
-npx hardhat verify --network mantle <CONTRACT_ADDRESS> <CONSTRUCTOR_ARGS>
+npx hardhat verify --network storyAeneid <CONTRACT_ADDRESS> <CONSTRUCTOR_ARGS>
 ```
 
 ### 3. Check Deployment Info
@@ -104,14 +94,14 @@ Deployment information is saved to `deployments/<network>.json` for reference.
 
 1. **Never commit `.env` file** - It contains your private key
 2. **Use a dedicated deployment wallet** - Don't use your main wallet
-3. **Keep minimal funds** - Only keep enough MNT for gas fees
+3. **Keep minimal funds** - Only keep enough IP for gas fees
 4. **Test on testnet first** - Always test deployments on testnet before mainnet
 5. **Verify contracts** - Always verify contracts on the explorer
 
 ## Troubleshooting
 
 ### "Insufficient funds"
-- Make sure your deployment wallet has enough MNT for gas fees
+- Make sure your deployment wallet has enough IP for gas fees
 - Check your balance: The script will show your balance before deploying
 
 ### "Nonce too high"
@@ -123,7 +113,7 @@ Deployment information is saved to `deployments/<network>.json` for reference.
 - You can verify manually later using the explorer
 
 ### "Network not found"
-- Make sure you're using the correct network name: `mantle` or `mantleTestnet`
+- Make sure you're using the correct network name: `storyAeneid`
 - Check your RPC URL in `.env`
 
 ## Next Steps
@@ -133,13 +123,13 @@ After successful deployment:
 1. Update frontend `.env` with contract addresses
 2. Test minting on testnet
 3. Test all contract interactions
-4. Deploy to mainnet when ready
+4. Deploy to mainnet when Story mainnet support is available
 5. Update production environment variables
 
 ## Support
 
 For issues or questions:
 - Check Hardhat documentation: https://hardhat.org/docs
-- Mantle documentation: https://docs.mantle.xyz
+- Story documentation: https://docs.story.foundation
 - Check deployment logs in `deployments/` directory
 

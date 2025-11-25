@@ -207,7 +207,7 @@ const MintIP = () => {
             Mint Intellectual Property
           </h1>
           <p className="text-xl text-muted-foreground">
-            Tokenize your creations on the Mantle blockchain
+            Tokenize your creations on the Story Aeneid testnet
           </p>
         </motion.div>
 
@@ -574,7 +574,7 @@ const MintIP = () => {
               <div>
                 <h3 className="text-lg font-bold mb-2">About IP Minting</h3>
                 <p className="text-muted-foreground">
-                  When you mint your creations as IP tokens, they become permanent, on-chain assets on the Mantle blockchain. 
+                  When you mint your creations as IP tokens, they become permanent, on-chain assets on the Story Aeneid testnet. 
                   This ensures provenance, enables automatic royalty distribution, and allows for future licensing and collaboration opportunities.
                 </p>
               </div>

@@ -5,7 +5,7 @@
 
 import { ethers } from "ethers";
 import { getContractInstance } from "../contracts";
-import { getMantleProvider } from "../mantle";
+import { getNetworkProvider } from "../network";
 import WorldTokenABI from "../abis/WorldToken.json";
 import { World } from "@/types";
 

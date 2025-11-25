@@ -1,11 +1,10 @@
 /**
- * Mantle Smart Contract Deployment Script
- * 
- * This script deploys all LoreMint contracts to Mantle network
- * 
+ * Story Aeneid Smart Contract Deployment Script
+ *
+ * Deploys all LoreMint contracts to the Story Aeneid network.
+ *
  * Usage:
- *   npx hardhat run scripts/deployMantle.ts --network mantle
- *   npx hardhat run scripts/deployMantle.ts --network mantleTestnet
+ *   npx hardhat run scripts/deployStory.ts --network storyAeneid
  */
 
 import hre from "hardhat";
@@ -24,7 +23,7 @@ async function main() {
   
   console.log("Deploying contracts with the account:", deployer.address);
   console.log("Network:", network.name, "Chain ID:", network.chainId.toString());
-  console.log("Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "MNT");
+  console.log("Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "IP");
 
   // Base URI for metadata (update with your actual metadata server URL)
   const baseURI = process.env.BASE_URI || "https://api.loremint.com/metadata/";
@@ -93,7 +92,7 @@ async function main() {
   console.log("VITE_CONTRIBUTION_MANAGER_ADDRESS=" + contributionManagerAddress);
 
   // Verify contracts (optional, requires API key)
-  if (process.env.MANTLE_EXPLORER_API_KEY) {
+  if (process.env.STORY_AENEID_EXPLORER_API_KEY) {
     console.log("\n🔍 Verifying contracts on explorer...");
     try {
       await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait for explorer to index

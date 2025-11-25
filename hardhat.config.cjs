@@ -13,26 +13,14 @@ const config = {
     },
   },
   networks: {
-    mantle: {
-      url: process.env.MANTLE_RPC_URL || 
-        (process.env.ALCHEMY_API_KEY 
-          ? `https://mantle-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`
-          : "https://rpc.mantle.xyz"),
-      chainId: 5000,
+    storyAeneid: {
+      url:
+        process.env.STORY_AENEID_RPC_URL ||
+        process.env.MANTLE_SEPOLIA_RPC_URL ||
+        "https://aeneid.storyrpc.io",
+      chainId: 1315,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 1000000000, // 1 gwei
-    },
-    mantleTestnet: {
-      url: process.env.MANTLE_TESTNET_RPC_URL || "https://rpc.testnet.mantle.xyz",
-      chainId: 5001,
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      gasPrice: 1000000000, // 1 gwei
-    },
-    mantleSepolia: {
-      url: process.env.MANTLE_SEPOLIA_RPC_URL || "https://rpc.sepolia.mantle.xyz",
-      chainId: 5003,
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      gasPrice: 100000000, // 0.1 gwei (lower for testnet)
     },
     hardhat: {
       chainId: 1337,
@@ -46,32 +34,17 @@ const config = {
   },
   etherscan: {
     apiKey: {
-      mantle: process.env.MANTLE_EXPLORER_API_KEY || "",
-      mantleTestnet: process.env.MANTLE_EXPLORER_API_KEY || "",
+      storyAeneid: process.env.STORY_AENEID_EXPLORER_API_KEY || "",
     },
     customChains: [
       {
-        network: "mantle",
-        chainId: 5000,
+        network: "storyAeneid",
+        chainId: 1315,
         urls: {
-          apiURL: "https://explorer.mantle.xyz/api",
-          browserURL: "https://explorer.mantle.xyz",
-        },
-      },
-      {
-        network: "mantleTestnet",
-        chainId: 5001,
-        urls: {
-          apiURL: "https://explorer.testnet.mantle.xyz/api",
-          browserURL: "https://explorer.testnet.mantle.xyz",
-        },
-      },
-      {
-        network: "mantleSepolia",
-        chainId: 5003,
-        urls: {
-          apiURL: "https://explorer.sepolia.mantle.xyz/api",
-          browserURL: "https://explorer.sepolia.mantle.xyz",
+          apiURL:
+            process.env.STORY_AENEID_EXPLORER_API_URL ||
+            "https://aeneid.storyscan.xyz/api",
+          browserURL: "https://aeneid.storyscan.xyz",
         },
       },
     ],

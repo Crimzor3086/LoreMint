@@ -5,7 +5,7 @@
 
 import { ethers } from "ethers";
 import { getContractInstance, CONTRACTS } from "../contracts";
-import { getMantleProvider } from "../mantle";
+import { getNetworkProvider } from "../network";
 import CharacterTokenABI from "../abis/CharacterToken.json";
 import { Character } from "@/types";
 
@@ -126,7 +126,7 @@ export function subscribeToCharacterMints(
   callback: (character: Character) => void
 ): () => void {
   const contract = getContractInstance("CHARACTER_TOKEN", CharacterTokenABI);
-  const provider = getMantleProvider();
+    const provider = getNetworkProvider();
 
   const filter = contract.filters.CharacterMinted();
   

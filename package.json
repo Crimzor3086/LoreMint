@@ -10,9 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "compile": "hardhat compile",
-    "deploy:mantle": "hardhat run scripts/deployMantle.ts --network mantle",
-    "deploy:mantle-testnet": "hardhat run scripts/deployMantle.ts --network mantleTestnet",
-    "deploy:mantle-sepolia": "hardhat run scripts/deployMantle.ts --network mantleSepolia",
+    "deploy:story": "hardhat run scripts/deployStory.ts --network storyAeneid",
+    "deploy:story-individual": "hardhat run scripts/deployIndividual.ts --network storyAeneid",
     "verify": "hardhat verify",
     "test": "hardhat test"
   },
