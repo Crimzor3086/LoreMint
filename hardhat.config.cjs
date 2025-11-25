@@ -16,7 +16,7 @@ const config = {
     storyAeneid: {
       url:
         process.env.STORY_AENEID_RPC_URL ||
-        process.env.MANTLE_SEPOLIA_RPC_URL ||
+        process.env.NETWORK_RPC_URL ||
         "https://aeneid.storyrpc.io",
       chainId: 1315,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],

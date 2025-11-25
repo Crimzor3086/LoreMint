@@ -23,7 +23,6 @@ export const STORY_AENEID_TESTNET: NetworkConfig = {
   rpcUrl:
     import.meta.env.VITE_STORY_AENEID_RPC_URL ||
     import.meta.env.VITE_NETWORK_RPC_URL ||
-    import.meta.env.VITE_MANTLE_SEPOLIA_RPC_URL ||
     FALLBACK_RPC_URL,
   chainId: Number(import.meta.env.VITE_STORY_AENEID_CHAIN_ID || 1315),
   networkName:
