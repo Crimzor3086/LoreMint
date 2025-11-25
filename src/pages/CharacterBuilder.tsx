@@ -112,7 +112,7 @@ const CharacterBuilder = () => {
       toast.error("Please enter a character name");
       return;
     }
-
+    
     try {
       const character = saveLocalCharacter({
         name,

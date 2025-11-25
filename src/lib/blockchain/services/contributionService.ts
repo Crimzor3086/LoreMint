@@ -35,6 +35,13 @@ const STATUS_MAP: Record<number, Contribution["status"]> = {
   2: "rejected",
 };
 
+const ASSET_TYPE_MAP: Record<number, "character" | "world" | "plot"> = {
+  0: "character",
+  1: "plot",
+  2: "character",
+  3: "world",
+};
+
 /**
  * Get all contributions by querying events
  */
@@ -287,6 +294,8 @@ function mapContributionData(data: ContributionData, id: string): Contribution {
     votes: Number(data.votes),
     createdAt: new Date(Number(data.createdAt) * 1000),
     assetId: data.assetId.toString(),
+    assetType: ASSET_TYPE_MAP[data.contributionType],
+    royaltyPercentage: Number(data.royaltyPercentage),
   };
 }
 

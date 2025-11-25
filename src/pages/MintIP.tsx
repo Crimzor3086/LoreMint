@@ -151,7 +151,7 @@ const MintIP = () => {
       });
 
       if (result) {
-        toast.success(`${type} minted successfully as IP token!`);
+      toast.success(`${type} minted successfully as IP token!`);
         setMintedAssets((prev) => new Set([...prev, id]));
         
         // Remove from local storage if it was a local asset
@@ -342,16 +342,16 @@ const MintIP = () => {
                             ))}
                           </div>
                           <div className="flex gap-2">
-                            <GradientButton
-                              variant="gold"
+                          <GradientButton
+                            variant="gold"
                               onClick={() => handleMint("character", character.id, {
                                 name: character.name,
                                 description: character.backstory || "",
                               })}
                               disabled={isMinting || mintedAssets.has(character.id) || mintingAssetId === character.id || mintingAssetId !== null}
                               className="flex-1 md:flex-none"
-                            >
-                              <Coins className="w-4 h-4 mr-2 inline" />
+                          >
+                            <Coins className="w-4 h-4 mr-2 inline" />
                               {isMinting ? "Minting..." : mintedAssets.has(character.id) ? "Minted" : "Mint as IP"}
                             </GradientButton>
                             {character.id.startsWith("local_") && !mintedAssets.has(character.id) && (
@@ -362,7 +362,7 @@ const MintIP = () => {
                                 className="px-4"
                               >
                                 <Trash2 className="w-4 h-4" />
-                              </GradientButton>
+                          </GradientButton>
                             )}
                           </div>
                         </div>
@@ -439,16 +439,16 @@ const MintIP = () => {
                             )}
                           </div>
                           <div className="flex gap-2">
-                            <GradientButton
-                              variant="gold"
+                          <GradientButton
+                            variant="gold"
                               onClick={() => handleMint("world", world.id, {
                                 name: world.name,
                                 description: world.description || `${world.geography}\n\n${world.culture}`,
                               })}
                               disabled={isMinting || mintedAssets.has(world.id) || mintingAssetId === world.id || mintingAssetId !== null}
                               className="flex-1 md:flex-none"
-                            >
-                              <Coins className="w-4 h-4 mr-2 inline" />
+                          >
+                            <Coins className="w-4 h-4 mr-2 inline" />
                               {isMinting ? "Minting..." : mintedAssets.has(world.id) ? "Minted" : "Mint as IP"}
                             </GradientButton>
                             {world.id.startsWith("local_") && !mintedAssets.has(world.id) && (
@@ -459,7 +459,7 @@ const MintIP = () => {
                                 className="px-4"
                               >
                                 <Trash2 className="w-4 h-4" />
-                              </GradientButton>
+                          </GradientButton>
                             )}
                           </div>
                         </div>
@@ -530,16 +530,16 @@ const MintIP = () => {
                         )}
                       </div>
                           <div className="flex gap-2">
-                            <GradientButton
-                              variant="gold"
+                      <GradientButton
+                        variant="gold"
                               onClick={() => handleMint("plot", plot.id, {
                                 name: plot.title,
                                 description: plot.description || "",
                               })}
                               disabled={isMinting || mintedAssets.has(plot.id) || mintingAssetId === plot.id || mintingAssetId !== null}
                               className="flex-1 md:flex-none"
-                            >
-                              <Coins className="w-4 h-4 mr-2 inline" />
+                      >
+                        <Coins className="w-4 h-4 mr-2 inline" />
                               {isMinting ? "Minting..." : mintedAssets.has(plot.id) ? "Minted" : "Mint as IP"}
                             </GradientButton>
                             {plot.id.startsWith("local_") && !mintedAssets.has(plot.id) && (
@@ -550,7 +550,7 @@ const MintIP = () => {
                                 className="px-4"
                               >
                                 <Trash2 className="w-4 h-4" />
-                              </GradientButton>
+                      </GradientButton>
                             )}
                           </div>
                     </GlowCard>

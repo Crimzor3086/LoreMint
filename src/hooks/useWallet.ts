@@ -38,14 +38,14 @@ export function useWallet() {
 
           setWallet({
             address,
-            isConnected: true,
+        isConnected: true,
             balance,
             chainId: Number(network.chainId),
           });
         }
       } catch (err) {
         console.error("Error checking wallet connection:", err);
-      }
+    }
     };
 
     checkConnection();

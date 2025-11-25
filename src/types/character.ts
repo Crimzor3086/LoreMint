@@ -1,7 +1,7 @@
 export interface Character {
   id: string;
   name: string;
-  personality: string[];
+  personality?: string[];
   backstory: string;
   abilities: string[];
   traits: string[];
@@ -10,5 +10,6 @@ export interface Character {
   mintedAsIP: boolean;
   tokenId?: string;
   contractAddress?: string;
+  creator?: string;
 }
 

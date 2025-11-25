@@ -8,5 +8,6 @@ export interface PlotArc {
   createdAt: Date;
   tokenId?: string;
   contractAddress?: string;
+  creator?: string;
 }
 

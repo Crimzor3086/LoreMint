@@ -9,6 +9,7 @@ export interface Contribution {
   createdAt: Date;
   assetId?: string;
   assetType?: "character" | "world" | "plot";
+  royaltyPercentage?: number;
 }
 
 export interface RoyaltySplit {

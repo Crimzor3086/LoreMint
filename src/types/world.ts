@@ -10,5 +10,6 @@ export interface World {
   mintedAsIP: boolean;
   tokenId?: string;
   contractAddress?: string;
+  creator?: string;
 }
 

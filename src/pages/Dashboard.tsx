@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { GlowCard } from "@/components/ui/glow-card";
 import { GradientButton } from "@/components/ui/gradient-button";
 import { ParticleBackground } from "@/components/ParticleBackground";
@@ -13,15 +13,87 @@ import { useWalletContext } from "@/context/WalletContext";
 import { useCharacters } from "@/hooks/useCharacters";
 import { useWorlds } from "@/hooks/useWorlds";
 import { usePlots } from "@/hooks/usePlots";
+import { useContributions } from "@/hooks/useContributions";
 
 const Dashboard = () => {
   const { wallet } = useWalletContext();
   const { characters, isLoading: isLoadingCharacters } = useCharacters();
   const { worlds, isLoading: isLoadingWorlds } = useWorlds();
   const { plots: plotArcs, isLoading: isLoadingPlots } = usePlots();
-  const [royaltySplits, setRoyaltySplits] = useState<RoyaltySplit[]>([]);
+  const { contributions, isLoading: isLoadingContributions } = useContributions();
 
-  const isLoading = isLoadingCharacters || isLoadingWorlds || isLoadingPlots;
+  const isLoading = isLoadingCharacters || isLoadingWorlds || isLoadingPlots || isLoadingContributions;
+
+  const royaltySplits = useMemo(() => {
+    if (!contributions.length) {
+      return [];
+    }
+
+    const contributionAssetTypeMap: Record<string, RoyaltySplit["assetType"]> = {
+      character: "character",
+      artwork: "character",
+      story: "plot",
+      expansion: "world",
+    };
+
+    return contributions
+      .filter((contribution) => contribution.assetId && contribution.status !== "rejected")
+      .map((contribution) => {
+        const assetType =
+          contribution.assetType ||
+          contributionAssetTypeMap[contribution.type] ||
+          "character";
+        const assetId = contribution.assetId!;
+
+        let assetName = contribution.title;
+        let creatorAddress = contribution.contributorAddress;
+
+        if (assetType === "character") {
+          const asset = characters.find((char) => char.id === assetId);
+          if (asset) {
+            assetName = asset.name;
+            creatorAddress = asset.creator || creatorAddress;
+          }
+        } else if (assetType === "world") {
+          const asset = worlds.find((world) => world.id === assetId);
+          if (asset) {
+            assetName = asset.name;
+            creatorAddress = asset.creator || creatorAddress;
+          }
+        } else {
+          const asset = plotArcs.find((plot) => plot.id === assetId);
+          if (asset) {
+            assetName = asset.title;
+            creatorAddress = asset.creator || creatorAddress;
+          }
+        }
+
+        const contributorPercentage = contribution.royaltyPercentage ?? 0;
+        const creatorPercentage = Math.max(0, 100 - contributorPercentage);
+
+        return {
+          id: contribution.id,
+          assetId,
+          assetType,
+          assetName,
+          creatorAddress,
+          creatorPercentage,
+          contributors:
+            contributorPercentage > 0
+              ? [
+                  {
+                    address: contribution.contributorAddress,
+                    name: contribution.title,
+                    percentage: contributorPercentage,
+                    contributionId: contribution.id,
+                  },
+                ]
+              : [],
+          totalRevenue: Number(contribution.votes || 0),
+          lastDistribution: contribution.createdAt,
+        };
+      });
+  }, [contributions, characters, worlds, plotArcs]);
   return (
     <div className="min-h-screen bg-background relative">
       <ParticleBackground />
