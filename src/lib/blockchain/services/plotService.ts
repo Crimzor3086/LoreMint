@@ -5,6 +5,7 @@
 
 import { ethers } from "ethers";
 import { getContractInstance } from "../contracts";
+import { getNetworkProvider } from "../network";
 import PlotTokenABI from "../abis/PlotToken.json";
 import { PlotArc } from "@/types";
 
@@ -23,32 +24,39 @@ export interface PlotMetadata {
 export async function getUserPlots(address: string): Promise<PlotArc[]> {
   try {
     const contract = getContractInstance("PLOT_TOKEN", PlotTokenABI);
-    
-    let balance: bigint;
-    try {
-      balance = await contract.balanceOf(address);
-    } catch (error: any) {
-      if (error?.message?.includes("not deployed") || error?.code === "BAD_DATA") {
-        console.warn("PlotToken contract not deployed or invalid address");
-        return [];
-      }
-      throw error;
-    }
+    const provider = getNetworkProvider();
 
-    if (balance === 0n) {
+    const latestBlock = await provider.getBlockNumber();
+    const lookbackBlocks = Number(import.meta.env.VITE_EVENT_LOOKBACK_BLOCKS || 50000);
+    const fromBlock = Math.max(0, Number(latestBlock) - lookbackBlocks);
+
+    const filter = contract.filters.PlotMinted(null, address);
+    const events = await contract.queryFilter(filter, fromBlock, latestBlock);
+
+    if (!events.length) {
       return [];
     }
 
-    const plots: PlotArc[] = [];
-
-    try {
-      for (let i = 0; i < Number(balance); i++) {
+    const plots = await Promise.all(
+      events.map(async (event) => {
         try {
-          const tokenId = await contract.tokenOfOwnerByIndex(address, i);
+          const tokenId =
+            event.args?.tokenId?.toString() ??
+            event.args?.[0]?.toString();
+
+          if (!tokenId) {
+            return null;
+          }
+
+          const owner = await contract.ownerOf(tokenId);
+          if (owner.toLowerCase() !== address.toLowerCase()) {
+            return null;
+          }
+
           const metadata = await contract.plots(tokenId);
-          
-          plots.push({
-            id: tokenId.toString(),
+
+          return {
+            id: tokenId,
             title: metadata.title,
             description: metadata.description,
             characters: metadata.characterIds.map((id: bigint) => id.toString()),
@@ -56,17 +64,26 @@ export async function getUserPlots(address: string): Promise<PlotArc[]> {
             creator: metadata.creator,
             createdAt: new Date(Number(metadata.createdAt) * 1000),
             status: "minted",
-          });
+          } as PlotArc;
         } catch (err) {
-          break;
+          console.warn("Failed to parse plot event", err);
+          return null;
         }
+      })
+    );
+
+    const uniquePlots: PlotArc[] = [];
+    const seenTokenIds = new Set<string>();
+
+    for (const plot of plots) {
+      if (!plot || seenTokenIds.has(plot.id)) {
+        continue;
       }
-    } catch (error: any) {
-      console.warn("PlotToken doesn't support token enumeration");
-      return [];
+      seenTokenIds.add(plot.id);
+      uniquePlots.push(plot);
     }
 
-    return plots;
+    return uniquePlots;
   } catch (error: any) {
     if (error?.message?.includes("not deployed") || error?.code === "BAD_DATA") {
       console.warn("PlotToken contract not deployed yet or invalid");

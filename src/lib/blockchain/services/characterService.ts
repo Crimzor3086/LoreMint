@@ -24,38 +24,74 @@ export interface CharacterMetadata {
 export async function getUserCharacters(address: string): Promise<Character[]> {
   try {
     const contract = getContractInstance("CHARACTER_TOKEN", CharacterTokenABI);
-    
-    // Try to get balance first to check if contract is valid
-    let balance: bigint;
-    try {
-      balance = await contract.balanceOf(address);
-    } catch (error: any) {
-      // Contract might not be deployed or address might be invalid
-      if (error?.message?.includes("not deployed") || error?.code === "BAD_DATA" || error?.message?.includes("could not decode")) {
-        console.warn("CharacterToken contract not deployed or invalid address");
-        return [];
-      }
-      throw error;
-    }
+    const provider = getNetworkProvider();
 
-    // If balance is 0, return empty array
-    if (balance === 0n) {
+    const latestBlock = await provider.getBlockNumber();
+    const lookbackBlocks = Number(import.meta.env.VITE_EVENT_LOOKBACK_BLOCKS || 50000);
+    const fromBlock = Math.max(0, Number(latestBlock) - lookbackBlocks);
+
+    const filter = contract.filters.CharacterMinted(null, address);
+    const events = await contract.queryFilter(filter, fromBlock, latestBlock);
+
+    if (!events.length) {
       return [];
     }
 
-    // The contract doesn't implement ERC721Enumerable, so we can't enumerate tokens
-    // For now, return empty array - in production, use an indexer or event logs
-    // TODO: Implement event-based indexing or use a subgraph/indexer
-    console.warn("CharacterToken doesn't support token enumeration. Use an indexer or event logs to track ownership.");
-    return [];
+    const characters = await Promise.all(
+      events.map(async (event) => {
+        try {
+          const tokenId =
+            event.args?.tokenId?.toString() ??
+            event.args?.[0]?.toString();
+
+          if (!tokenId) {
+            return null;
+          }
+
+          const owner = await contract.ownerOf(tokenId);
+          if (owner.toLowerCase() !== address.toLowerCase()) {
+            return null;
+          }
+
+          const metadata = await contract.characters(tokenId);
+
+          return {
+            id: tokenId,
+            name: metadata.name,
+            backstory: metadata.backstory,
+            abilities: metadata.abilities,
+            traits: metadata.traits,
+            creator: metadata.creator,
+            createdAt: new Date(Number(metadata.createdAt) * 1000),
+            mintedAsIP: true,
+          } as Character;
+        } catch (err) {
+          console.warn("Failed to parse character event", err);
+          return null;
+        }
+      })
+    );
+
+    // Filter out null values and duplicates
+    const uniqueCharacters: Character[] = [];
+    const seenTokenIds = new Set<string>();
+
+    for (const character of characters) {
+      if (!character || seenTokenIds.has(character.id)) {
+        continue;
+      }
+      seenTokenIds.add(character.id);
+      uniqueCharacters.push(character);
+    }
+
+    return uniqueCharacters;
   } catch (error: any) {
-    // If contract not deployed, return empty array
     if (error?.message?.includes("not deployed") || error?.code === "BAD_DATA" || error?.message?.includes("could not decode")) {
       console.warn("CharacterToken contract not deployed yet or invalid");
       return [];
     }
     console.error("Error fetching user characters:", error);
-    return []; // Return empty array instead of throwing
+    return [];
   }
 }
 

@@ -25,32 +25,39 @@ export interface WorldMetadata {
 export async function getUserWorlds(address: string): Promise<World[]> {
   try {
     const contract = getContractInstance("WORLD_TOKEN", WorldTokenABI);
-    
-    let balance: bigint;
-    try {
-      balance = await contract.balanceOf(address);
-    } catch (error: any) {
-      if (error?.message?.includes("not deployed") || error?.code === "BAD_DATA") {
-        console.warn("WorldToken contract not deployed or invalid address");
-        return [];
-      }
-      throw error;
-    }
+    const provider = getNetworkProvider();
 
-    if (balance === 0n) {
+    const latestBlock = await provider.getBlockNumber();
+    const lookbackBlocks = Number(import.meta.env.VITE_EVENT_LOOKBACK_BLOCKS || 50000);
+    const fromBlock = Math.max(0, Number(latestBlock) - lookbackBlocks);
+
+    const filter = contract.filters.WorldMinted(null, address);
+    const events = await contract.queryFilter(filter, fromBlock, latestBlock);
+
+    if (!events.length) {
       return [];
     }
 
-    const worlds: World[] = [];
-
-    try {
-      for (let i = 0; i < Number(balance); i++) {
+    const worlds = await Promise.all(
+      events.map(async (event) => {
         try {
-          const tokenId = await contract.tokenOfOwnerByIndex(address, i);
+          const tokenId =
+            event.args?.tokenId?.toString() ??
+            event.args?.[0]?.toString();
+
+          if (!tokenId) {
+            return null;
+          }
+
+          const owner = await contract.ownerOf(tokenId);
+          if (owner.toLowerCase() !== address.toLowerCase()) {
+            return null;
+          }
+
           const metadata = await contract.worlds(tokenId);
-          
-          worlds.push({
-            id: tokenId.toString(),
+
+          return {
+            id: tokenId,
             name: metadata.name,
             geography: metadata.geography,
             culture: metadata.culture,
@@ -59,17 +66,26 @@ export async function getUserWorlds(address: string): Promise<World[]> {
             creator: metadata.creator,
             createdAt: new Date(Number(metadata.createdAt) * 1000),
             mintedAsIP: true,
-          });
+          } as World;
         } catch (err) {
-          break;
+          console.warn("Failed to parse world event", err);
+          return null;
         }
+      })
+    );
+
+    const uniqueWorlds: World[] = [];
+    const seenTokenIds = new Set<string>();
+
+    for (const world of worlds) {
+      if (!world || seenTokenIds.has(world.id)) {
+        continue;
       }
-    } catch (error: any) {
-      console.warn("WorldToken doesn't support token enumeration");
-      return [];
+      seenTokenIds.add(world.id);
+      uniqueWorlds.push(world);
     }
 
-    return worlds;
+    return uniqueWorlds;
   } catch (error: any) {
     if (error?.message?.includes("not deployed") || error?.code === "BAD_DATA") {
       console.warn("WorldToken contract not deployed yet or invalid");
